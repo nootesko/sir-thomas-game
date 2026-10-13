@@ -1,0 +1,9 @@
+{
+ "char:thomas": {
+  "name": "Sir Thomas",
+  "model": "kk/knight",
+  "text": "o Cabelo do sir Thomas é preto",
+  "tint": "#ffffff",
+  "at": "2026-10-13T22:10:12.602Z"
+ }
+}

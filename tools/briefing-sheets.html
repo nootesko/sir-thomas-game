@@ -1,0 +1,79 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Briefing de sprite sheets — Sir Thomas</title></head><body>
+<p>Arte em vista 3/4 de cima (estilo Zelda: A Link to the Past / Tibia). Personagens e monstros vêm em sheets de 4 direções x 3 passos; árvores e objetos são desenhados vistos de cima com volume. Lido por tools/gen-assets.mjs. Levas: <b>amostra</b> (Thomas + carvalho, para validar), <b>chars</b>, <b>monstros</b>, <b>cenario</b>, ou <b>all</b>. As sombras no chão são desenhadas pelo jogo: as imagens não devem ter sombra.</p>
+<script>
+const STYLE = 'Polished, professional 16-bit pixel art of SNES quality (Chrono Trigger, Secret of Mana, Zelda: A Link to the Past), for a top-down 2D fantasy RPG. Crisp uniform square pixels on one consistent grid, clean one-pixel dark outline, strong readable silhouette, 4 to 5 carefully chosen shades per color with subtle highlights, cel shading lit from the top-left, rich saturated but harmonious colors, no anti-aliasing, no blur, no gradients, no noise, no glow, no dithering. No text, no watermark, no signature.';
+const TOP = 'Drawn in classic top-down three-quarter perspective exactly like Zelda: A Link to the Past: the camera looks down at the scene at a steep angle, so we see the top of heads and the top of objects as well as their front; characters have big heads and short bodies, feet at the bottom.';
+const SHEET = 'A character sprite sheet laid out on a strict grid of 4 rows and 3 columns with equal cell sizes and clear empty gaps between cells, all poses the same size and aligned to the same baseline in each row. Row 1: facing DOWN toward the viewer. Row 2: facing LEFT. Row 3: facing RIGHT. Row 4: facing UP, seen from behind. Columns: standing still, walking with the left foot forward, walking with the right foot forward.';
+const MSHEET = 'A creature sprite sheet laid out on a strict grid of 4 rows and 3 columns with equal cell sizes and clear empty gaps between cells, all poses the same size and aligned to the same baseline in each row. Row 1: facing DOWN toward the viewer. Row 2: facing LEFT. Row 3: facing RIGHT. Row 4: facing UP, seen from behind. Columns: standing still, moving with the first pose of its walk, moving with the second pose of its walk.';
+const TR = 'Fully transparent background (PNG with alpha), nothing cropped, no shadow on the ground.';
+const PROP = `Single scenery object sprite with real volume: we see its top surface and its front side. ${TOP} Whole object visible, centered.`;
+const THOMAS = 'The character is Sir Thomas: a young knight boy around 10 years old with messy brown hair, big brown eyes, blue tunic armor with silver plates and gold trim, a yellow cape, brown leather boots and gloves, an ice-blue crystal sword in his right hand and a blue kite shield with a gold border and a golden lion on his left arm.';
+const C = (file, who) => ({ file, cat: 'personagem', size: '1024×1536', bg: 'transparente', prompt: `${SHEET} ${who} ${TOP} ${STYLE} ${TR}` });
+const M = (file, what) => ({ file, cat: 'personagem', size: '1024×1024', bg: 'transparente', prompt: `${MSHEET} ${what} ${TOP} ${STYLE} ${TR}` });
+const P = (file, what, size = '1024×1024') => ({ file, cat: 'cenário', size, bg: 'transparente', prompt: `${PROP} ${what} ${STYLE} ${TR}` });
+const batches = [
+ { id:'amostra', title:'Amostra', sub:'valide a grade e a perspectiva antes de gerar o resto', items:[
+  C('sheet_thomas.png', THOMAS),
+  P('sprite_tree_oak_top.png', 'A single round leafy oak tree: a big rounded green canopy made of chunky leaf clusters with lighter clusters on the top-left and darker ones underneath and at the right, a visible brown trunk base at the bottom.'),
+ ]},
+ { id:'chars', title:'Personagens', sub:'sheets 4 direções x 3 passos', items:[
+  C('sheet_maite.png', 'The character is Princess Maite: a girl around 12 years old with long brown hair in a braid, a small golden crown, a pink and gold royal dress with a blue sash, a yellow cape, brown boots, kind determined expression.'),
+  C('sheet_pipo.png', 'The character is Pipo: a small boy around 6 years old with blond spiky hair, green tunic, brown shorts, bare feet, holding a wooden toy sword, excited big smile.'),
+  C('sheet_guarda.png', 'The character is Olavo the castle guard: a soldier in silver chainmail and a blue tabard with a golden lion emblem, open-face steel helmet, holding a long spear upright.'),
+  C('sheet_ferreiro.png', 'The character is Bruno the blacksmith: a big strong man with a black beard, bald head, dark brown leather apron over a brown shirt, rolled sleeves, holding a hammer.'),
+  C('sheet_cozinheira.png', 'The character is Rosa the cook: a plump cheerful older woman with gray hair in a bun, red dress, white apron, holding a wooden ladle.'),
+  C('sheet_mercador.png', 'The character is Gaspar the merchant: a thin smiling man with a curled mustache, a purple vest over a cream shirt, a red cloth hat, a big leather coin pouch on his belt.'),
+  C('sheet_rei.png', 'The character is the old wise king: a long white beard, a golden crown with blue gems, a deep red and blue velvet robe with a golden lion emblem and white fur trim, holding a golden scepter.'),
+  C('sheet_taverneira.png', 'The character is Helena the tavern keeper: a woman with red hair tied up, a yellow dress with a white apron, sleeves rolled, carrying a wooden tray with two mugs.'),
+  C('sheet_padre.png', 'The character is Father Anselmo, an old priest: gray hair, a long dark gray robe with a small golden sun medallion, hands folded, gentle face.'),
+  C('sheet_capitao.png', 'The character is Captain Duarte: a veteran soldier in silver chainmail and a blue tabard with gold trim, steel helmet with a small yellow plume, a scar on the cheek, sword at the belt.'),
+  C('sheet_villager_a.png', 'The character is a merchant woman villager with brown hair under a white headscarf, a green dress with a beige apron, carrying a wicker basket.'),
+  C('sheet_villager_b.png', 'The character is an old man villager with a white beard, a brown cap, a gray tunic, walking with a wooden cane.'),
+  C('sheet_villager_c.png', 'The character is a young farmer villager with a straw hat, a cream shirt, brown trousers held by suspenders, boots.'),
+  C('sheet_villager_d.png', 'The character is a girl villager around 8 years old with brown pigtails, a light blue dress, white socks, brown shoes.'),
+  C('sheet_villager_e.png', 'The character is a baker villager: a round man with a white baker hat, a white apron over a blue shirt, a mustache.'),
+  C('sheet_villager_f.png', 'The character is a bard villager: a young man with a feathered green cap, a purple tunic, carrying a lute on his back.'),
+ ]},
+ { id:'monstros', title:'Monstros', sub:'sheets 4 direções x 3 poses', items:[
+  M('sheet_coelho.png', 'The creature is a small wild rabbit with light brown fur, white belly, long ears up, black shiny eyes; its moving poses are hops.'),
+  M('sheet_lobo.png', 'The creature is a gray forest wolf on all fours, head lowered, snarling with visible fangs, yellow eyes, dark gray back and lighter belly; its moving poses are a running stride.'),
+  M('sheet_wolf_ice.png', 'The creature is a menacing ice wolf on all fours, head lowered, snarling with visible fangs, white and pale blue fur with frost crystals on its back, glowing blue eyes; its moving poses are a running stride.'),
+  M('sheet_abelha.png', 'The creature is a giant angry bee the size of a dog, hovering, yellow and black striped body, pale translucent wings, big dark eyes, a sharp stinger; its moving poses show the wings in two positions.'),
+  M('sheet_serpente.png', 'The creature is a green snake coiled with its head raised, open mouth with fangs and a forked tongue, dark green diamond pattern on its back; its moving poses are slithering curves.'),
+  M('sheet_rato.png', 'The creature is a big sewer rat with dark gray fur, pink nose and tail, small red eyes, bared teeth; its moving poses are a scurrying run.'),
+  M('sheet_barata.png', 'The creature is a giant brown cockroach with a shiny dark brown shell, six legs, long antennae and small black eyes; its moving poses alternate the legs.'),
+  M('sheet_morcego.png', 'The creature is a dark purple cave bat with wide wings, big ears, small red eyes and tiny fangs, flying; its moving poses show the wings up and down.'),
+  M('sheet_aranha.png', 'The creature is a big black cave spider with eight hairy legs, red markings on the back, eight small shiny eyes and fangs; its moving poses alternate the legs.'),
+ ]},
+ { id:'cenario', title:'Cenário', sub:'árvores e objetos vistos de cima, com volume', items:[
+  P('sprite_tree_pine_top.png', 'A tall pine tree seen from above: dark and medium green layered foliage in chunky pixel triangles stacked around a central tip, the lower layers wider than the upper ones, a bit of brown trunk visible at the bottom.', '1024×1536'),
+  P('sprite_tree_pine_snow_top.png', 'A tall pine tree covered in snow seen from above: pale blue-green layered foliage with thick white snow on each layer stacked around a central tip, a bit of brown trunk visible at the bottom.', '1024×1536'),
+  P('prop_market_stall_top.png', 'A medieval market stall: a wooden counter with baskets of apples, bread and pumpkins on top, under a striped red and white cloth awning on wooden poles; we see the top of the awning and the front of the counter.'),
+  P('prop_fountain_top.png', 'A round stone fountain with two tiers and a small golden lightning-bolt statue on top; the round basin of blue water with white splashes is seen from above.'),
+  P('prop_well_top.png', 'A medieval stone well with a small wooden roof, a rope and a bucket; we see the roof top and the round stone rim.'),
+  P('prop_lamp_post_top.png', 'A tall iron street lamp post with a warm orange lantern on top, medieval style, on a small square stone base.', '1024×1536'),
+  P('prop_banner_top.png', 'A hanging vertical cloth banner on a wooden pole: royal blue fabric with a gold border and a big golden lightning bolt emblem.', '1024×1536'),
+  P('prop_statue_knight_top.png', 'A gray stone statue of an armored knight holding a sword point-down on a square pedestal, slightly weathered; we see the top of the pedestal.', '1024×1536'),
+  P('prop_barrel_crate_top.png', 'A wooden barrel with iron bands next to a wooden crate; we see their tops and fronts.'),
+  P('prop_hay_cart_top.png', 'A wooden farm cart full of yellow hay with two big wooden wheels; we see the hay pile from above.'),
+  P('prop_signpost_top.png', 'A wooden signpost with two blank arrow-shaped boards pointing in opposite directions. No text on the boards.'),
+  P('prop_chest_closed_top.png', 'A wooden treasure chest with gold trim and a gold lock, closed; we see the rounded lid top and the front.'),
+  P('prop_chest_open_top.png', 'A wooden treasure chest with gold trim, lid open toward the back, gold coins and a few sparkles inside, seen from above.'),
+  P('prop_campfire_lit_top.png', 'A small campfire: crossed logs inside a ring of gray stones seen from above, bright orange and yellow pixel flames rising in the middle.'),
+  P('prop_campfire_off_top.png', 'A small unlit campfire: crossed dark logs inside a ring of gray stones seen from above, no flame.'),
+  P('prop_rock_top.png', 'A big rounded gray boulder with a few cracks and a little moss; we see its top and front.'),
+  P('prop_bush_top.png', 'A round green bush with a few small red berries; we see its rounded top.'),
+  P('prop_training_dummy_top.png', 'A wooden training dummy on a post: straw-stuffed body with a sack head, a wooden crossbar for arms, a few arrows stuck in it.'),
+  P('prop_fence_top.png', 'A short section of wooden fence: two posts with two horizontal rails, slightly weathered brown wood, wide and low.'),
+  P('prop_flowers_top.png', 'A small garden flower bed seen from above: a low ring of stones with red, yellow and blue flowers and green leaves, wide and low.'),
+  P('prop_bench_top.png', 'A wooden park bench with iron legs, wide and low; we see the seat from above and the backrest.'),
+  P('prop_crates_top.png', 'A stack of two wooden crates with a burlap sack of grain leaning on them; we see the top of the stack.'),
+  P('prop_grave_top.png', 'A small gray stone gravestone with a rounded top on a patch of dark soil.'),
+  P('prop_hedge_top.png', 'A low rectangular trimmed green hedge, wide, with a flat top seen from above and a darker front side.'),
+  P('prop_cave_mouth_top.png', 'A dark cave entrance in a mound of gray rock: a black arched opening at the front, rocky top seen from above, a bit of moss.'),
+  P('prop_mushroom_top.png', 'A cluster of three glowing blue cave mushrooms of different sizes, pale stems, soft blue caps seen from above.'),
+  P('prop_stalactite_top.png', 'A gray rock stalagmite cone rising from the cave floor, pointed, with wet highlights.'),
+ ]},
+];
+const KEY = 'unused';
+</script></body></html>

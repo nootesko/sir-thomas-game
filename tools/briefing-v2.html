@@ -1,0 +1,80 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Briefing de arte v2 — Sir Thomas</title></head><body>
+<p>Prompts da leva v2 (visão de cima estilo Tibia, pixel art limpa). Lido por tools/gen-assets.mjs.</p>
+<script>
+const STYLE = 'Clean 16-bit style pixel art for a top-down 2D fantasy RPG in the spirit of Tibia and Stardew Valley. Crisp uniform square pixels on one consistent grid (a character is about 64 pixels tall), one-pixel dark outline, bold readable silhouette, 3 to 4 shades per color, flat cel shading lit from the top-left, no anti-aliasing, no blur, no gradients, no noise, no dithering, no glow. No text, no watermark, no signature.';
+const VIEW = 'Seen from slightly above at a three-quarter top-down angle (camera tilted about 60 degrees), facing the viewer, feet or base at the bottom.';
+const TR = 'Fully transparent background (PNG with alpha), subject centered and whole, nothing cropped, generous empty margin around it.';
+const SEAM = 'Seamless tileable pixel-art ground texture seen straight from above: the left edge continues into the right edge and the top into the bottom with no visible seam. Fills the whole canvas, even lighting, no border, no vignette, no perspective.';
+const THOMAS = 'The character is Sir Thomas: a young knight boy around 10 years old with messy brown hair, big brown eyes, blue tunic armor with silver plates and gold trim, a yellow cape, brown leather boots and gloves.';
+const SWORD = 'His sword has a translucent ice-blue crystal blade with a lighter edge, a gold crossguard with a small blue gem, a brown leather grip and a gold pommel.';
+const SHIELD = 'His shield is a blue kite shield with a thick gold border and a golden lion rampant in the center.';
+const CHAR = `Full-body game character sprite standing still. ${VIEW} Chibi proportions: big head, short body, about two and a half heads tall.`;
+const MON = `Full-body monster sprite for the player to fight. ${VIEW}`;
+const PROP = `Single scenery object sprite. ${VIEW}`;
+
+const batches = [
+ { id:'tex', title:'Texturas', sub:'', items:[
+  { file:'tex_goldstone_wall.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Golden sandstone castle wall of large rectangular blocks in warm gold and amber tones with darker mortar lines and a few lighter highlight blocks. ${STYLE}` },
+  { file:'tex_cobblestone.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Medieval cobblestone street: rounded gray and warm brown stones of slightly different sizes with dark gaps, a few mossy green stones. ${STYLE}` },
+  { file:'tex_grass.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Lush green meadow grass with small tufts, a few tiny yellow and white flowers and patches of slightly darker green. ${STYLE}` },
+  { file:'tex_snow.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Fresh snow, white with pale blue shadows, small bumps and a few sparkles. ${STYLE}` },
+  { file:'tex_dirt_path.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Packed brown dirt road with small pebbles and faint wheel ruts. ${STYLE}` },
+  { file:'tex_roof_red.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Overlapping red-orange clay roof tiles in neat rows, each tile with a lighter top edge and a dark shadow under it. ${STYLE}` },
+  { file:'tex_plaster_timber.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Medieval half-timbered house wall: cream plaster with dark brown wooden beams in vertical, horizontal and diagonal frames, front view. ${STYLE}` },
+  { file:'tex_wood_planks.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Vertical wooden planks in warm brown tones with visible grain, knots and dark gaps. ${STYLE}` },
+  { file:'tex_water.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Clear blue river water with lighter wavy highlights and a few white foam specks. ${STYLE}` },
+  { file:'tex_sewer_stone.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Old dark gray-green sewer stone bricks, damp, with moss in the cracks and a few darker wet stones. ${STYLE}` },
+  { file:'tex_sewer_water.png', cat:'textura', size:'1024×1024', bg:'opaco', prompt:`${SEAM} Murky green sewer water with slow ripples, a few bubbles and bits of floating debris. ${STYLE}` },
+ ]},
+ { id:'chars', title:'Personagens', sub:'', items:[
+  { file:'sprite_thomas.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} ${THOMAS} Confident smile, holding the sword in his right hand and the shield on his left arm. ${SWORD} ${SHIELD} ${STYLE} ${TR}` },
+  { file:'sprite_maite.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Princess Maite: a girl around 12 years old with long brown hair in a braid, a small golden crown, a pink and gold royal dress with a blue sash, a yellow cape, brown boots, kind determined expression. ${STYLE} ${TR}` },
+  { file:'sprite_ferreiro.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Bruno the blacksmith: a big strong man with a black beard, bald head, dark brown leather apron over a brown shirt, rolled sleeves, holding a hammer, friendly expression. ${STYLE} ${TR}` },
+  { file:'sprite_cozinheira.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Rosa the cook: a plump cheerful older woman with gray hair in a bun, red dress, white apron, holding a wooden ladle. ${STYLE} ${TR}` },
+  { file:'sprite_guarda.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Olavo the castle guard: a soldier in silver chainmail and a blue tabard with a golden lion emblem, open-face steel helmet, holding a long spear, serious but kind face. ${STYLE} ${TR}` },
+  { file:'sprite_pipo.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Pipo: a small boy around 6 years old with blond spiky hair, green tunic, brown shorts, bare feet, holding a wooden toy sword, excited big smile. ${STYLE} ${TR}` },
+  { file:'sprite_mercador.png', cat:'personagem', size:'1024×1536', bg:'transparente', prompt:`${CHAR} Gaspar the merchant: a thin smiling man with a curled mustache, a purple vest over a cream shirt, a red cloth hat, a big leather coin pouch on his belt, holding up a gold coin. ${STYLE} ${TR}` },
+  { file:'sprite_villagers_sheet.png', cat:'personagem', size:'1536×1024', bg:'transparente', prompt:`Six different medieval villagers standing in a row with equal spacing and clear gaps between them, all full-body, feet aligned on the same bottom line, same chibi proportions (big head, two and a half heads tall). ${VIEW} A merchant woman with a basket, an old man with a cane, a young farmer with a straw hat, a girl with pigtails, a baker with a white hat, a bard with a lute. ${STYLE} ${TR}` },
+ ]},
+ { id:'mon', title:'Monstros', sub:'', items:[
+  { file:'sprite_coelho.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A small wild rabbit with light brown fur, white belly, long ears up, black shiny eyes, sitting alert. ${STYLE} ${TR}` },
+  { file:'sprite_lobo.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A gray forest wolf standing on all fours, head lowered, snarling with visible fangs, yellow eyes, dark gray back and lighter belly. ${STYLE} ${TR}` },
+  { file:'sprite_wolf_ice.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A menacing ice wolf standing on all fours, head lowered, snarling with visible fangs, white and pale blue fur with frost crystals on its back, glowing blue eyes. ${STYLE} ${TR}` },
+  { file:'sprite_abelha.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A giant angry bee the size of a dog, hovering just above the ground, yellow and black striped body, pale translucent wings, big dark eyes, a sharp stinger. ${STYLE} ${TR}` },
+  { file:'sprite_serpente.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A green snake coiled on the ground with its head raised, open mouth with fangs and a forked tongue, dark green diamond pattern on its back. ${STYLE} ${TR}` },
+  { file:'sprite_rato.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A big sewer rat with dark gray fur, pink nose and tail, small red eyes, bared teeth, crouched ready to bite. ${STYLE} ${TR}` },
+  { file:'sprite_barata.png', cat:'personagem', size:'1024×1024', bg:'transparente', prompt:`${MON} A giant brown cockroach with a shiny dark brown shell, six legs, long antennae and small black eyes, crawling toward the viewer. ${STYLE} ${TR}` },
+  { file:'sprite_mordrak_vulture.png', cat:'personagem', size:'1536×1024', bg:'transparente', prompt:`A giant evil black vulture flying toward the viewer with its wings fully spread, glowing red eyes, a dark red wrinkled head, a hooked yellow beak, yellow talons open, a few wisps of black smoke. Full wingspan visible. ${STYLE} ${TR}` },
+ ]},
+ { id:'props', title:'Cenário', sub:'', items:[
+  { file:'sprite_tree_pine.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A tall pine tree, dark and medium green layered foliage in chunky pixel triangles, brown trunk visible at the bottom. ${STYLE} ${TR}` },
+  { file:'sprite_tree_pine_snow.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A tall pine tree covered in snow, pale blue-green foliage with thick white snow on each layer, brown trunk visible at the bottom. ${STYLE} ${TR}` },
+  { file:'sprite_tree_oak.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A round leafy oak tree with a big bright green canopy in chunky clusters and a few darker green shadows, thick brown trunk visible at the bottom. ${STYLE} ${TR}` },
+  { file:'prop_market_stall.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A medieval market stall: wooden counter with baskets of apples, bread and pumpkins, a striped red and white cloth awning on wooden poles. ${STYLE} ${TR}` },
+  { file:'prop_fountain.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A round stone fountain with two tiers and a small golden lightning-bolt statue on top, blue water with white splashes. ${STYLE} ${TR}` },
+  { file:'prop_well.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A medieval stone well with a small wooden roof, a rope and a bucket. ${STYLE} ${TR}` },
+  { file:'prop_lamp_post.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A tall iron street lamp post with a warm orange lantern on top, medieval style. ${STYLE} ${TR}` },
+  { file:'prop_banner.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A hanging vertical cloth banner on a wooden pole: royal blue fabric with a gold border and a big golden lightning bolt emblem. ${STYLE} ${TR}` },
+  { file:'prop_statue_knight.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A gray stone statue of an armored knight holding a sword point-down on a square pedestal, slightly weathered. ${STYLE} ${TR}` },
+  { file:'prop_barrel_crate.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A wooden barrel with iron bands next to a wooden crate. ${STYLE} ${TR}` },
+  { file:'prop_hay_cart.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A wooden farm cart full of yellow hay with two big wooden wheels. ${STYLE} ${TR}` },
+  { file:'prop_signpost.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A wooden signpost with two blank arrow-shaped boards pointing in opposite directions. No text on the boards. ${STYLE} ${TR}` },
+  { file:'prop_chest_closed.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A wooden treasure chest with gold trim and a gold lock, closed. ${STYLE} ${TR}` },
+  { file:'prop_chest_open.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A wooden treasure chest with gold trim, lid open, gold coins and a few sparkles inside. ${STYLE} ${TR}` },
+  { file:'prop_campfire_lit.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A small campfire with crossed logs inside a ring of gray stones, bright orange and yellow pixel flames. ${STYLE} ${TR}` },
+  { file:'prop_campfire_off.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A small unlit campfire: crossed dark logs inside a ring of gray stones, no flame. ${STYLE} ${TR}` },
+  { file:'prop_rock.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A big rounded gray boulder with a few cracks and a little moss. ${STYLE} ${TR}` },
+  { file:'prop_bush.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`${PROP} A round green bush with a few small red berries. ${STYLE} ${TR}` },
+  { file:'prop_scorch_mark.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`Top-down view of a dark scorch mark on the ground: an irregular black and dark purple burnt patch with a few black feathers. ${STYLE} ${TR}` },
+  { file:'prop_sewer_grate.png', cat:'cenário', size:'1024×1024', bg:'transparente', prompt:`Top-down view of a round iron sewer manhole grate with bars, dark metal with rust, a few stone edges around it. ${STYLE} ${TR}` },
+  { file:'prop_ladder.png', cat:'cenário', size:'1024×1536', bg:'transparente', prompt:`${PROP} A wooden ladder leaning against a dark stone wall section, leading up. ${STYLE} ${TR}` },
+ ]},
+ { id:'ui', title:'Interface', sub:'', items:[
+  { file:'ui_icons_sheet.png', cat:'interface', size:'1024×1024', bg:'transparente', prompt:`A 4 by 3 grid of 12 fantasy RPG inventory item icons with equal spacing, each icon centered in its own cell with clear empty gaps between cells, in this order left to right, top to bottom: ice-blue crystal sword with gold hilt, blue shield with gold lion, blue tunic armor, steel helmet, red wool cape, brown leather boots, gold amulet with an orange gem, gold ring with a blue gem, bowl of hot soup, wooden torch with flame, red potion bottle, golden key. ${STYLE} ${TR}` },
+  { file:'ui_icons_equip.png', cat:'interface', size:'1024×1024', bg:'transparente', prompt:`A 4 by 3 grid of 12 fantasy RPG inventory item icons with equal spacing, each icon centered in its own cell with clear empty gaps between cells, in this order left to right, top to bottom: plain iron sword, polished steel sword, flaming sword with an orange blade, white curved dragon-tooth sword; brown leather armor, yellowish brass chest armor, dark bronze chest armor, orange copper chest armor; shiny silver chest armor, golden chest armor, red dragon-scale chest armor, small pile of gold coins. ${STYLE} ${TR}` },
+  { file:'ui_icons_goods.png', cat:'interface', size:'1024×1024', bg:'transparente', prompt:`A 4 by 3 grid of 12 fantasy RPG inventory item icons with equal spacing, each icon centered in its own cell with clear empty gaps between cells, in this order left to right, top to bottom: loaf of bread, roasted meat on a bone, jar of golden honey, wedge of yellow cheese; small red potion bottle, large red potion bottle, gray wolf pelt, yellow bee stinger; green snake scale, pink rat tail, brown cockroach wing, white rabbit foot. ${STYLE} ${TR}` },
+  { file:'ui_card_frame.png', cat:'interface', size:'1024×1536', bg:'transparente', prompt:`An empty vertical trading card frame for a fantasy game: parchment-colored card with a thick ornate gold border, a decorative header band at the top and a plain empty area in the middle and bottom. No text, no icons, no item inside. ${STYLE} ${TR}` },
+ ]},
+];
+const KEY = 'unused';
+</script></body></html>

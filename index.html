@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>A Fortaleza do Relâmpago Amarelo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#2a1630">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>
+// Any error that stops the game from starting is shown on screen (red box) instead of only in the console.
+(function () { function show(msg) { var b = document.getElementById('boot-error') || document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'boot-error' })); b.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:#5a0000;color:#fff;padding:10px;font:13px monospace;white-space:pre-wrap;border:2px solid #f66;max-height:40%;overflow:auto'; b.textContent += msg + '\n'; }
+  window.addEventListener('error', function (e) { show((e.message || e.type) + (e.filename ? '  @ ' + e.filename.replace(location.origin, '') + ':' + e.lineno : '')); }, true);
+  window.addEventListener('unhandledrejection', function (e) { show('Promise: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
+  setTimeout(function () { if (!window.game) show('O jogo não iniciou em 20 s. Verifique a conexão (three.js vem da internet) e recarregue com Ctrl+Shift+R.'); }, 20000); })();
+</script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <canvas id="scene"></canvas>
+    <canvas id="overlay" width="480" height="300"></canvas>
+    <div id="hud">
+      <!-- top left: portrait, level, XP, gold, objective -->
+      <div id="hero-badge" class="tap" title="Herói (C)">
+        <div id="portrait"><canvas id="portrait-cv" width="128" height="128"></canvas></div>
+        <div id="lvl-shield"><span id="lvl-text">1</span></div>
+        <div id="hero-bars"><div id="xp-track"><div id="xp-fill"></div></div><div id="gold-pill"><i class="coin"></i><span id="gold-text">0</span></div></div>
+        <div id="pts-dot"></div>
+      </div>
+      <div id="objective" class="empty"><div class="label">OBJETIVO</div><div id="objective-text"></div><div id="objective-dist"></div></div>
+      <div id="region"></div><div id="clock"></div>
+      <div id="minimap-wrap" title="Mapa (M)"><canvas id="minimap" width="200" height="200"></canvas></div>
+      <div id="cold-pill" title="Frio"><span data-ic="snow" data-size="18"></span><div id="cold-track"><div id="cold-fill"></div></div></div>
+      <!-- menu buttons (Shop Titans style) -->
+      <div id="menu-bar">
+        <button class="mbtn tap" id="btn-inv"><span class="ic" data-ic="bag"></span><span class="lb">Bolsa</span><kbd>I</kbd></button>
+        <button class="mbtn tap" id="btn-attr"><span class="ic" data-ic="shield"></span><span class="lb">Herói</span><kbd>C</kbd><em class="badge" id="attr-badge"></em></button>
+        <button class="mbtn tap" id="btn-quests"><span class="ic" data-ic="scroll"></span><span class="lb">Missões</span><kbd>J</kbd></button>
+        <button class="mbtn tap" id="btn-map"><span class="ic" data-ic="map"></span><span class="lb">Mapa</span><kbd>M</kbd></button>
+        <button class="mbtn tap" id="btn-menu"><span class="ic" data-ic="gear"></span><span class="lb">Menu</span><kbd>Esc</kbd></button>
+      </div>
+      <!-- quick slots: potion and food -->
+      <div id="quick">
+        <button class="qslot tap" id="q1"><canvas width="16" height="16"></canvas><b></b><kbd>1</kbd></button>
+        <button class="qslot tap" id="q2"><canvas width="16" height="16"></canvas><b></b><kbd>2</kbd></button>
+      </div>
+      <!-- touch controls -->
+      <div id="joy"><div id="joy-knob"></div></div>
+      <div id="actions">
+        <button class="act tap" id="act-attack" data-ic="sword" data-size="54"></button>
+        <button class="act sm tap" id="act-dodge" data-ic="dodge" data-size="34"></button>
+        <button class="act sm tap" id="act-shield" data-ic="shield" data-size="34"></button>
+        <button class="act sm tap" id="act-run" data-ic="run" data-size="34"></button>
+        <button class="act sm tap" id="act-skill" data-ic="bolt" data-size="34"></button>
+      </div>
+      <div id="hint" class="tap"></div>
+      <div id="toast"></div>
+      <div id="dialog" class="tap"><div id="dialog-name"></div><div id="dialog-text"></div><div id="dialog-choices"></div><div class="small" id="dialog-hint">toque, clique ou E para continuar</div></div>
+      <div id="lore" class="tap"><div class="label">HISTÓRIAS DO MUNDO</div><div id="lore-title"></div><div id="lore-text"></div><div class="small">toque ou E para fechar</div></div>
+      <div id="card-wrap">
+        <div id="card"><div id="card-rarity"></div><div id="card-name"></div><canvas id="card-icon" width="64" height="64"></canvas><div id="card-stats"></div></div>
+        <div id="card-choice"><button class="btn red" id="card-discard">Descartar</button><button class="btn green" id="card-equip">Equipar</button></div>
+      </div>
+      <!-- hero: equipment, attributes and bag -->
+      <div id="panel-ui" class="ui-panel">
+        <div class="ui-head"><span id="panel-title">HERÓI</span><button class="ui-close" id="panel-close">✕</button></div>
+        <div class="tabs"><button class="tab" data-tab="hero">Herói</button><button class="tab" data-tab="bag">Bolsa</button><button class="tab" data-tab="gods">Deuses</button></div>
+        <div class="ui-body">
+          <div class="pane" id="pane-hero">
+            <div id="hero-top"><canvas id="hero-cv" width="200" height="260"></canvas><div id="hero-stats"></div></div>
+            <div id="equip"></div>
+            <div class="ui-sub">ATRIBUTOS · <span id="attr-points">0</span> pontos livres</div><div id="attr-list"></div>
+            <div class="ui-note">Cada nível dá 3 pontos. Ataque aumenta o dano, Velocidade acelera os golpes, Defesa reduz o dano sofrido, Fôlego aumenta a estamina.</div>
+          </div>
+          <div class="pane" id="pane-gods"></div>
+          <div class="pane" id="pane-bag">
+            <div class="ui-sub">BOLSA · <span id="inv-gold">0</span> moedas</div><div id="inv-grid"></div>
+            <div id="item-detail"></div>
+          </div>
+        </div>
+      </div>
+      <div id="shop-ui" class="ui-panel"><div class="ui-head"><span id="shop-title">LOJA</span><button class="ui-close" id="shop-close">✕</button></div>
+        <div class="tabs"><button class="tab" data-shop="buy">Comprar</button><button class="tab" data-shop="sell">Vender</button></div>
+        <div class="ui-body"><div class="ui-sub" id="shop-sub">você tem <span id="shop-gold">0</span> moedas</div><div id="shop-buy" class="ui-list"></div><div id="shop-sell" class="ui-list"></div></div></div>
+      <div id="lockpick"><canvas id="lockpick-cv" width="440" height="300"></canvas><div class="small">Arraste ou mova o mouse para girar a gazua · segure GIRAR (ou ESPAÇO) para forçar · Esc desiste</div><div class="lp-btns"><button class="btn red tap" id="lp-quit">Desistir</button><button class="btn green tap" id="lp-turn">Girar</button></div></div>
+      <div id="quests" class="ui-panel"><div class="ui-head"><span>DIÁRIO DE MISSÕES</span><button class="ui-close" id="quests-close">✕</button></div><div id="quest-list"></div></div>
+      <div id="menu-ui" class="ui-panel"><div class="ui-head"><span>MENU</span><button class="ui-close" id="menu-close">✕</button></div>
+        <div class="ui-body" id="menu-body">
+          <div class="opt"><span>Som</span><button class="btn" id="opt-sound">Ligado</button></div>
+          <div class="opt"><span>Qualidade gráfica</span><button class="btn" id="opt-quality"></button></div>
+          <div class="opt"><span>Zoom</span><div><button class="btn" id="opt-zoom-in">＋</button> <button class="btn" id="opt-zoom-out">－</button></div></div>
+          <div class="opt"><span>Mostrar FPS</span><button class="btn" id="opt-fps">Não</button></div>
+          <div class="opt"><span>Recomeçar do zero</span><button class="btn red" id="opt-new">Novo jogo</button></div>
+          <div id="help"><b>Teclado e mouse:</b> WASD anda · Shift corre · clique no chão anda, num monstro ataca · F golpe · Q Giro do Relâmpago (gasta estamina) · botão direito escudo · Espaço esquiva · E usar/falar · 1 e 2 itens rápidos · I bolsa · C herói · J missões · M mapa · Scroll zoom.<br><b>Toque:</b> joystick à esquerda anda (empurre até o fim para correr) · o botão de espadas ataca o monstro mais próximo · o vento esquiva · o escudo para defender · toque no chão para andar até lá · dois dedos dão zoom.</div>
+        </div></div>
+      <div id="chapter"></div>
+      <div id="bigtitle"><div class="t1">A FORTALEZA DO</div><div class="t2">RELÂMPAGO AMARELO</div></div>
+      <div id="fps"></div>
+      <div id="fade"></div>
+    </div>
+  </div>
+  <div id="bigmap-wrap"><canvas id="bigmap" width="600" height="600"></canvas><div class="small">toque, M ou clique fecha o mapa</div></div>
+  <div id="end"><div class="et">FIM DA FATIA VERTICAL</div><div class="es">Thomas chegou à borda da Floresta Congelada.</div><div class="es">A história continua no Capítulo III — O Lobisomem de Gelo e a Sábia Coruja.</div><div id="end-stats"></div><button class="btn green" id="btn-end-continue">CONTINUAR EXPLORANDO</button></div>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

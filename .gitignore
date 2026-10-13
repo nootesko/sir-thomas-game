@@ -1,0 +1,4 @@
+assets/*.png
+.env
+node_modules/
+*.log

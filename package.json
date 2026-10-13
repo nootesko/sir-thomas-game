@@ -1,0 +1,7 @@
+{
+  "name": "fortaleza-do-relampago-amarelo",
+  "version": "0.1.0",
+  "description": "Protótipo em primeira pessoa — A Fortaleza do Relâmpago Amarelo",
+  "type": "module",
+  "scripts": { "start": "python3 tools/serve.py 8080" }
+}

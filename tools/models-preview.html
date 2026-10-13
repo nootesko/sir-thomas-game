@@ -1,0 +1,25 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Modelos 3D — prévia</title>
+<style>body{margin:0;background:#334;color:#fff;font:12px sans-serif}canvas{display:block}#info{position:fixed;left:8px;top:8px;white-space:pre}</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+</head><body><div id="info"></div>
+<script type="module">
+// Grid of every model in assets3d/ (names from ?m=a,b,c or the default list), each playing its "walk" role, facing +z (toward the camera).
+import * as THREE from 'three';
+import { Models, Actor, makeProp } from '../src/models.js';
+const q = new URLSearchParams(location.search); const names = (q.get('m') || 'char_knight,char_barbarian,char_mage,char_rogue,char_rogue_hooded,char_king,char_farmer,mon_wolf,mon_wolf2,mon_rabbit,mon_bee,mon_snake,mon_rat,mon_spider,mon_bat,mon_cockroach,mon_vulture').split(',');
+const role = q.get('role') || 'walk'; const cols = +(q.get('cols') || 6);
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.shadowMap.enabled = true; document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x334); const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 200);
+const sun = new THREE.DirectionalLight(0xfff2c8, 2.2); sun.position.set(10, 20, 10); sun.castShadow = true; scene.add(sun); scene.add(new THREE.HemisphereLight(0xbfe3ff, 0x6a8a4a, 1.2));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshLambertMaterial({ color: 0x5a7a4a })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+Models.base = '../'; await Models.preload(names); const actors = []; const info = [];
+names.forEach((n, i) => { const x = (i % cols) * 3 - (cols - 1) * 1.5, z = -Math.floor(i / cols) * 3.5; if (!Models.has(n)) { info.push(n + ': FALTA'); return; }
+  const g = Models.get(n); let obj; if (g.animations.length) { const a = new Actor(n, { height: 1.8 }); a.play(role); actors.push(a); obj = a.root; info.push(`${n}: ${Object.keys(a.actions).join(' ')}`); } else { obj = makeProp(n, 1.8); info.push(n + ': estático'); }
+  obj.position.set(x, 0, z); scene.add(obj);
+  const label = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 48; const x2 = c.getContext('2d'); x2.font = 'bold 24px sans-serif'; x2.fillStyle = '#fff'; x2.textAlign = 'center'; x2.fillText(n, 128, 32); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true })); s.scale.set(2.6, 0.5, 1); s.position.set(x, 2.3, z); return s; })(); scene.add(label);
+});
+document.getElementById('info').textContent = info.join('\n');
+const rows = Math.ceil(names.length / cols); cam.position.set(0, 9 + rows * 1.2, 10); cam.lookAt(0, 0.6, -rows * 1.4);
+const clock = new THREE.Clock(); (function loop() { requestAnimationFrame(loop); const dt = clock.getDelta(); for (const a of actors) a.update(dt); renderer.render(scene, cam); })();
+window.ready = true;
+</script></body></html>
