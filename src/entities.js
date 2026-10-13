@@ -17,7 +17,7 @@ export class NPC {
   constructor(game, { id, name, x, z, sprite = null, look = null, asset, sheet = null, model3d = null, color = '#fff', dialog, h = 1.9, kind = 'npc', path = null, routine = null, wander = 0, fly = 0 }) {
     this.game = game; this.id = id; this.name = name; this.kind = kind; this.alive = true; this.hittable = false; this.radius = 0.5; this.dialog = dialog; this.blocking = true;
     this.pos = new THREE.Vector3(x, 0, z);
-    let frames = sheet && Assets.has(sheet) ? Assets.anim(sheet, 64) : null; if (!frames && !(asset && Assets.has(asset)) && !sprite && look) frames = S.humanFrames(look);
+    let frames = sheet && Assets.has(sheet) ? Assets.animAuto(sheet) : null; if (!frames && !(asset && Assets.has(asset)) && !sprite && look) frames = S.humanFrames(look);
     const src = frames ? frames.down[0] : (asset && Assets.has(asset)) ? Assets.images[asset] : sprite || S.human(look || {}); const ratio = src.width / src.height;
     this.mesh = makeBillboard(src, h * ratio, h, true); this.mesh.position.copy(this.pos); game.scene.add(this.mesh); this.h = h; this.walker = new Walker(this.mesh, frames);
     this.shadow = makeShadow(h * ratio * 0.7); game.scene.add(this.shadow);

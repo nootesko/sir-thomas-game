@@ -11,9 +11,11 @@ function autoCrop(img) {
 }
 // The generated art is drawn at 1024px with "fake" big pixels. Shrinking it to a real low-res grid keeps the pixel look crisp in game
 // (textures are then shown near 1:1) instead of a blurry minified photo. Halve repeatedly with smoothing, then snap alpha.
-function pixelize(img, targetH) {
+// smooth = true keeps soft painted art (new HD sheets): no hard alpha cut, and the texture is filtered linearly
+function pixelize(img, targetH, smooth = false) {
   let c = img; while (c.height / 2 >= targetH) { const n = document.createElement('canvas'); n.width = Math.max(1, Math.round(c.width / 2)); n.height = Math.max(1, Math.round(c.height / 2)); const x = n.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, n.width, n.height); c = n; }
   if (c.height !== targetH) { const n = document.createElement('canvas'); n.height = targetH; n.width = Math.max(1, Math.round(c.width * targetH / c.height)); const x = n.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, n.width, n.height); c = n; }
+  if (smooth) { c.smooth = true; return c; }
   const x = c.getContext('2d'); const id = x.getImageData(0, 0, c.width, c.height), d = id.data; for (let i = 3; i < d.length; i += 4) d[i] = d[i] < 128 ? 0 : 255; x.putImageData(id, 0, 0); return c;
 }
 const PIXEL_H = { sprite_tree_pine: 96, sprite_tree_pine_snow: 96, sprite_tree_oak: 80, sprite_mordrak_vulture: 72, sprite_villagers_sheet: 64, prop_lamp_post: 80, prop_banner: 72, prop_statue_knight: 80, prop_ladder: 64 };
@@ -29,7 +31,9 @@ export const Assets = {
   // name may be a list: the first existing image wins (new three-quarter art, then the older front-view art, then the code drawing)
   src(name, fallback) { if (Array.isArray(name)) { for (const n of name) if (this.images[n]) return this.images[n]; return fallback; } return this.images[name] || fallback; },
   // walking frames of a character sheet, sliced once and shared: { down: [stand, left, right], left: [...], right: [...], up: [...] }
-  anim(name, targetH = 64) { const k = name + '@' + targetH; if (!(k in this.frames)) this.frames[k] = this.images[name] ? sliceAnimSheet(this.images[name], targetH) : null; return this.frames[k]; },
+  anim(name, targetH = 64, smooth = false) { const k = name + '@' + targetH + (smooth ? 's' : ''); if (!(k in this.frames)) this.frames[k] = this.images[name] ? sliceAnimSheet(this.images[name], targetH, 3, 4, smooth) : null; return this.frames[k]; },
+  // HD painted sheets (big images) stay smooth at high resolution; old pixel-art sheets keep their pixel grid
+  animAuto(name) { const img = this.images[name]; return img && img.height > 1000 ? this.anim(name, 256, true) : this.anim(name, 64); },
   texture(name, fallback, { repeat = 1, repeatY = null, wrap = true, mips = true } = {}) {
     const src = this.images[name] || fallback; const t = new THREE.Texture(src); t.needsUpdate = true;
     t.magFilter = THREE.LinearFilter; t.minFilter = mips ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter; t.generateMipmaps = mips;   // smooth, painted look (Shop Titans) instead of hard pixels
@@ -69,10 +73,10 @@ export function sliceSheet(img, cols, rows = 1) { return sheetCells(img, cols, r
 function bbox(c) { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let minX = c.width, minY = c.height, maxX = -1, maxY = -1; for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y * c.width + i) * 4 + 3] > 140) { if (i < minX) minX = i; if (i > maxX) maxX = i; if (y < minY) minY = y; if (y > maxY) maxY = y; } return maxX < 0 ? null : { x0: minX, y0: minY, x1: maxX + 1, y1: maxY + 1 }; }
 // A character sheet of 4 rows (down, left, right, up) x 3 columns (stand, left foot, right foot). Every frame is cut to the same
 // size, anchored at the feet and centered, so the animation does not jitter; then shrunk to the real pixel grid.
-export function sliceAnimSheet(img, targetH = 64, cols = 3, rows = 4) {
+export function sliceAnimSheet(img, targetH = 64, cols = 3, rows = 4, smooth = false) {
   const cells = sheetCells(img, cols, rows); if (cells.length !== cols * rows) return null;
   const boxes = cells.map(bbox); if (boxes.some(b => !b)) return null;
   const W = Math.max(...boxes.map(b => b.x1 - b.x0)) + 2, H = Math.max(...boxes.map(b => b.y1 - b.y0)) + 2;
-  const frames = cells.map((c, i) => { const b = boxes[i]; const o = document.createElement('canvas'); o.width = W; o.height = H; const x = o.getContext('2d'); x.drawImage(c, b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0, Math.floor((W - (b.x1 - b.x0)) / 2), H - 1 - (b.y1 - b.y0), b.x1 - b.x0, b.y1 - b.y0); return pixelize(o, targetH); });
+  const frames = cells.map((c, i) => { const b = boxes[i]; const o = document.createElement('canvas'); o.width = W; o.height = H; const x = o.getContext('2d'); x.drawImage(c, b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0, Math.floor((W - (b.x1 - b.x0)) / 2), H - 1 - (b.y1 - b.y0), b.x1 - b.x0, b.y1 - b.y0); return pixelize(o, targetH, smooth); });
   const out = {}; ['down', 'left', 'right', 'up'].forEach((d, r) => { out[d] = frames.slice(r * cols, r * cols + cols); }); return out;
 }

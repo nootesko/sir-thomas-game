@@ -23,7 +23,7 @@ export class Player {
     this.stepping = false; this.stepFrom = new THREE.Vector3(); this.stepTo = new THREE.Vector3(); this.stepT = 0; this.stepDur = 0.3; this.path = null; this.target = null;
     // visible body (third person): the three-quarter sheet (4 directions x 3 steps) when it exists, else the single front-view image
     const look = { hair: '#5a2d12', tunic: '#2b5fc7', legs: '#1e46a8', trim: '#f6c12e' };
-    let frames = Assets.has('sheet_thomas') ? Assets.anim('sheet_thomas', 64) : null; if (!frames && !Assets.has('sprite_thomas')) frames = S.humanFrames(look);
+    let frames = Assets.has('sheet_thomas') ? Assets.animAuto('sheet_thomas') : null; if (!frames && !Assets.has('sprite_thomas')) frames = S.humanFrames(look);
     const src = frames ? frames.down[0] : Assets.has('sprite_thomas') ? Assets.images.sprite_thomas : S.human(look);
     this.h = 1.9; this.w = this.h * src.width / src.height; this.mesh = makeBillboard(src, this.w, this.h, true); this.mesh.material.depthTest = false; this.mesh.renderOrder = 20; game.scene.add(this.mesh);   // always visible, even behind roofs and trees
     this.walker = new Walker(this.mesh, frames); this.running = false;

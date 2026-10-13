@@ -29,7 +29,7 @@ export function groundDepth(m) { if (m.userData.groundDepth) return m; m.userDat
 const texCache = new Map();
 export function spriteTexture(src) {
   let t = texCache.get(src); if (t) return t;
-  t = new THREE.Texture(src); t.needsUpdate = true; t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapLinearFilter; t.colorSpace = THREE.SRGBColorSpace; texCache.set(src, t); return t;
+  t = new THREE.Texture(src); t.needsUpdate = true; t.magFilter = src.smooth ? THREE.LinearFilter : THREE.NearestFilter; t.minFilter = src.smooth ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter; t.colorSpace = THREE.SRGBColorSpace; texCache.set(src, t); return t;
 }
 const matCache = new Map(), ownMats = new Set();
 function build(src, opts) { const m = new THREE.MeshBasicMaterial({ map: spriteTexture(src), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: true, fog: opts.fog !== false }); return opts.feet === false ? m : patch(m); }
