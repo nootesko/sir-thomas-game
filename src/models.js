@@ -23,7 +23,9 @@ export const Models = {
   async preload(names) { await Promise.all(names.map(n => this.load(n))); },
   has(name) { return !!this.cache[name]; },
   get(name) { return this.cache[name] || null; },
-};registerBirds(Models.cache); registerCritters(Models.cache);   // code-built birds (src/birds.js) live in the cache like loaded models
+};// the game is 2D again (14/10/2026): no 3D model is loaded unless the URL has ?3d (the 3D version stays in the code)
+export const MODE3D = typeof location !== 'undefined' && new URLSearchParams(location.search).has('3d');
+if (MODE3D) { registerBirds(Models.cache); registerCritters(Models.cache); }   // code-built birds (src/birds.js) live in the cache like loaded models
 
 // Lambert instead of the glTF PBR material: much cheaper on phone GPUs, and its soft diffuse light suits the painted look
 function lambert(m) {
@@ -443,4 +445,4 @@ export const FIXTURE_MODELS = ['forest/Grass_1_A', 'forest/Grass_2_A', 'forest/B
   'mon_frog', 'mon_slime', 'mon_slime_king', 'mon_dragon'];
 const heldNames = () => [...Object.values(CHAR_MODELS), ...VILLAGER_MODELS, CHILD_MODEL, ...Object.values(MONSTER_MODELS)].flatMap(c => c.hold ? Object.values(c.hold) : []).concat(Object.values(SWORDS), Object.values(SHIELDS)).map(h => Array.isArray(h) ? h[0] : h).filter(n => n && n.includes('/'));
 const USED = [...[...FIXTURE_MODELS.map(model => ({ model })), ...Object.values(CHAR_MODELS), ...VILLAGER_MODELS, CHILD_MODEL, ...Object.values(MONSTER_MODELS), ...Object.values(PROP_MODELS)].filter(Boolean).map(m => m.model), ...heldNames(), ...Object.values(CHAR_MODELS).map(c => c.skin).filter(Boolean)];
-export const MODEL_NAMES = [...new Set(USED.flatMap(n => CLIP_SOURCE[n] ? [n, CLIP_SOURCE[n]] : [n]))];
+export const MODEL_NAMES = MODE3D ? [...new Set(USED.flatMap(n => CLIP_SOURCE[n] ? [n, CLIP_SOURCE[n]] : [n]))] : [];
