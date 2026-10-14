@@ -112,6 +112,7 @@ export class City {
     this.tower(W, -(GATE_HALF + 4.5), 4, 13); this.tower(W, GATE_HALF + 4.5, 4, 13); this.tower(-(GATE_HALF + 4.5), W, 4, 13); this.tower(GATE_HALF + 4.5, W, 4, 13);
     this.southGate = new THREE.Vector3(0, 0, W); this.eastGate = new THREE.Vector3(W, 0, 0);
     const ban = this.set('banner', Assets.src(TOP('prop_banner'), PX.propBanner()), 60, 1.6, 4);
+    { const add = ban.add.bind(ban); ban.add = (x, z, w, h) => add(x, z, w, h, 0); }   // banners stand on their own pole on the ground (the old heights hung them on walls that the 2D view does not have)
     ban.add(W - 5.2, -(GATE_HALF + 4.5), 1.6, 4, 8); ban.add(W - 5.2, GATE_HALF + 4.5, 1.6, 4, 8);
     for (let z = -80; z <= 80; z += 20) if (Math.abs(z) > 10) ban.add(W - 1.6, z, 1.4, 3.5, 4.5);
     for (let x = -80; x <= 80; x += 20) ban.add(x, -W + 1.6, 1.4, 3.5, 4.5);
