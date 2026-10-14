@@ -69,6 +69,7 @@ export class City {
       const fr = Assets.images.floresta_regioes; if (fr) { const sx = fr.width / 1774, sy = fr.height / 887;
         for (const [n, x0, y0, x1, y1] of [['stump', 25, 55, 410, 385], ['log', 445, 95, 930, 365], ['stalactiteHang', 1035, 35, 1390, 335], ['obelisk', 1435, 15, 1740, 405], ['column', 25, 435, 335, 840], ['nest', 340, 535, 735, 840], ['owlTree', 690, 275, 1415, 875], ['cavemouth', 1375, 465, 1770, 840]]) {
           const c = document.createElement('canvas'); c.width = Math.round((x1 - x0) * sx); c.height = Math.round((y1 - y0) * sy); c.getContext('2d').drawImage(fr, x0 * sx, y0 * sy, c.width, c.height, 0, 0, c.width, c.height); const t = trimAlpha(c); t.smooth = true; this._art[n] = t; } }
+      cut(Assets.images.cidade_a, 4, 2, ['fountain', 'well', 'lamp', 'bench', 'stallA', 'stallB', 'statue', 'banner']);
       cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
   // nature on the ground (trees, stones, bushes, grass, flowers) casts no drop shadow (user's choice)
   static NO_SHADOW = /^(oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
