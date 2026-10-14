@@ -119,13 +119,13 @@ class Game {
     const K = CRYPT; add('esqueleto', [[K.x1 - 15, K.z1 - 30], [K.x1 - 45, K.z1 - 50], [K.x1 - 20, K.z0 + 60], [K.x0 + 70, K.z1 - 15], [K.x0 + 90, K.z1 - 50], [K.x0 + 25, K.z0 + 75], [K.x0 + 60, K.z0 + 70]]);
     add('esqueleto_guerreiro', [[K.x1 - 40, K.z0 + 30], [K.x0 + 100, K.z0 + 25], [K.x0 + 20, K.z1 - 25], [K.x0 + 55, K.z0 + 40]]); add('esqueleto_mago', [[K.x1 - 70, K.z1 - 20], [K.x0 + 30, K.z0 + 35]]); add('rei_esqueleto', [K.boss]);
     // the five Lost Pages (quest "As Páginas Perdidas"): swamp, jelly castle, gorge, Bird King's hill, crypt throne room
-    [[-318, 160], [-282, -150], [262, 252], [-128, -336], [K.boss[0] + 8, K.boss[1] - 4]].forEach(([x, z], i) => { const pg = new Prop(this, { kind: 'page', x, z, w: 0.8, h: 0.6, src: S_PAGE, collide: false }); pg.page = i; this.entities.push(pg); });
+    [[-318, 160], [-282, -150], [262, 252], [-128, -336], [K.boss[0] + 8, K.boss[1] - 4]].forEach(([x, z], i) => { const pg = new Prop(this, { kind: 'page', x, z, w: 0.8, h: 0.8, src: Assets.src('art_page', S_PAGE), collide: false }); pg.page = i; this.entities.push(pg); });
     this.entities.push(new Prop(this, { kind: 'cryptexit', x: K.entry[0] + 4, z: K.entry[1] + 4, w: 1.2, h: 2.4, src: Assets.src(TOP('prop_ladder'), S_LADDER), collide: false }));
     // the kingdom's regions (src/regions.js)
     const D = this.city.regions;
     add('sapo', D.lossot.spawns); add('sapo_alfa', [D.lossot.alpha]); add('geleca', D.geleca.spawns); add('rei_geleca', [D.geleca.king]);
     add('lobo_gelo', D.neveo.spawns); add('gaviao', D.colina.spawns); add('aranha', D.desfiladeiro.spawns.slice(0, 3)); add('morcego', D.desfiladeiro.spawns.slice(3)); add('dragao', [D.desfiladeiro.dragon]);
-    const fire = [Assets.src(TOP('prop_campfire_off'), S.FIRE_OFF), ...(Assets.has('prop_campfire_lit_top') || Assets.has('prop_campfire_lit') ? [Assets.src(TOP('prop_campfire_lit'))] : S.FIRE)];
+    const fire = [Assets.src(TOP('prop_campfire_off'), S.FIRE_OFF), ...(Assets.has('art_prop_campfire_lit') || Assets.has('prop_campfire_lit_top') || Assets.has('prop_campfire_lit') ? [Assets.src(TOP('prop_campfire_lit'))] : S.FIRE)];
     for (const [x, z] of [[-255, 112], D.neveo.fire, [-95, -290], [180, 132], [300, -48], [-232, -115]]) this.entities.push(new Prop(this, { kind: 'fire', x, z, w: 1.8, h: 2, src: fire, lit: true }));
     this.entities.push(new Prop(this, { kind: 'grate', x: Sw.grate[0], z: Sw.grate[1], w: 1.6, h: 1.0, src: Assets.src(TOP('prop_sewer_grate'), S_GRATE), yOff: 0.05, collide: false, flat: true }));
     this.entities.push(new Prop(this, { kind: 'ladder', x: Sw.entry[0], z: Sw.entry[1], w: 1.2, h: 2.4, src: Assets.src(TOP('prop_ladder'), S_LADDER), collide: false }));
@@ -172,7 +172,7 @@ class Game {
     if (this.winterPlaced) return; this.winterPlaced = true; const X = WALL;
     const chest = [Assets.src(TOP('prop_chest_closed'), S.CHEST), Assets.src(TOP('prop_chest_open'), S.CHEST_OPEN)];
     [[X + 20, -12, 'capa'], [X + 45, 14, 'sopa'], [X + 80, -16, 'botas'], [X + 130, 18, 'glacial'], [X + 60, -45, 'elmo'], [X + 110, 40, 'amuleto']].forEach(([x, z, item]) => this.entities.push(new Prop(this, { kind: 'chest', x, z, w: 1.6, h: 1.2, src: chest, item })));
-    const fire = [Assets.src(TOP('prop_campfire_off'), S.FIRE_OFF), ...(Assets.has('prop_campfire_lit_top') || Assets.has('prop_campfire_lit') ? [Assets.src(TOP('prop_campfire_lit'))] : S.FIRE)];
+    const fire = [Assets.src(TOP('prop_campfire_off'), S.FIRE_OFF), ...(Assets.has('art_prop_campfire_lit') || Assets.has('prop_campfire_lit_top') || Assets.has('prop_campfire_lit') ? [Assets.src(TOP('prop_campfire_lit'))] : S.FIRE)];
     [[-8, 20, true], [X + 30, 7, false], [X + 85, -8, false], [X + 140, 8, false]].forEach(([x, z, lit]) => this.entities.push(new Prop(this, { kind: 'fire', x, z, w: 1.8, h: 2, src: fire, lit })));
     [[X + 38, -9, 'sword', 'Espada Quebrada', '"Pertenceu a um cavaleiro que tentou atravessar o vale quando o inverno ainda dominava estas terras. Ele nunca chegou à floresta."'], [X + 100, 12, 'statue', 'Estátua Sem Rosto', '"Alguém esculpiu esta figura antes de a Fortaleza existir. Os braços estão erguidos, como se segurassem algo que brilhava."'], [X + 70, 30, 'toy', 'Brinquedo de Madeira', '"Um cavalinho de madeira, esquecido na neve. Alguma criança do vale brincava aqui quando ainda havia sol."']].forEach(([x, z, kind, title, text]) => this.entities.push(new Prop(this, { kind: 'lore', x, z, w: kind === 'statue' ? 1.6 : 1.1, h: kind === 'statue' ? 2.4 : 1.3, src: S.LORE[kind], title, text })));
     [[X + 25, -14], [X + 40, 16], [X + 58, -8], [X + 72, 14], [X + 90, -14], [X + 105, 10], [X + 120, -18], [X + 135, 12], [X + 150, -8], [X + 165, 10], [X + 60, -40], [X + 100, 36]].forEach(([x, z]) => this.entities.push(new Monster(this, 'lobo_gelo', x, z)));
@@ -286,6 +286,7 @@ class Game {
   }
 }
 Promise.all([Assets.preload(ASSET_NAMES), Models.preload(MODEL_NAMES)]).then(() => {
+  Assets.registerSheet('objetos_jogo', 4, 2, ['prop_chest_closed', 'prop_chest_open', 'prop_campfire_lit', 'prop_campfire_off', 'prop_sewer_grate', 'prop_ladder', 'prop_scorch_mark', 'page']);
   if (Assets.has('ui_logo')) { for (const id of ['bigtitle']) { const el = document.getElementById(id); const img = document.createElement('img'); img.src = 'assets/ui_logo.png'; img.className = 'logo'; const t1 = el.querySelector('.mt1, .t1'), t2 = el.querySelector('.mt2, .t2'); if (t1) t1.replaceWith(img); if (t2) t2.remove(); } }
   if (Assets.has('ui_card_frame')) { const card = document.getElementById('card'); card.classList.add('framed'); }
   window.game = new Game();
