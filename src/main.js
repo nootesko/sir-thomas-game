@@ -269,7 +269,7 @@ class Game {
       p.update(dt); this.chasers = this.nextChasers || []; this.nextChasers = [];
       this.separatePeople(dt);
       for (const e of this.entities) e.update(dt); this.entities = this.entities.filter(e => !e.removed);
-      this.city.faceAll(); this.city.fadeNear(p.pos.x, p.pos.z, dt); this.city.fadeSprites(p.pos.x, p.pos.z); this.city.update(dt, this.time); this.sky.update(p.pos); this.snow.update(dt, p.pos, this.city.winter);
+      this.city.faceAll(); this.city.fadeNear(p.pos.x, p.pos.z, dt); this.city.fadeSprites(p.pos.x, p.pos.z, dt); this.city.update(dt, this.time); this.sky.update(p.pos); this.snow.update(dt, p.pos, this.city.winter);
       this.lantern.position.set(p.pos.x, 1.6, p.pos.z);
       const under = this.city.inSewer(p.pos.x, p.pos.z) || this.city.inCave(p.pos.x, p.pos.z) || this.city.inCrypt(p.pos.x, p.pos.z);
       this.lantern.intensity = (under ? 12 : this.day.dark * 10 + (this.day.base === 'winter' ? 3 : 0)) + (p.leftItem === 'torch' ? 6 + Math.sin(this.time * 12) * 1.5 : 0);

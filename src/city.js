@@ -86,9 +86,12 @@ export class City {
   // banners were placed on walls for the 3D era; on the ground they must stand just outside any wall or building
   unstickBanners() { const b = this.sets.banner; if (!b || !b.items) return; for (const it of b.items) { const [x, z] = this.nearestFree(it.x, it.z, 0.7); it.x = x; it.z = z; } b.fy = null; b.face(); }
   // tall sprites (trees, cliffs, statues, stalls...) standing just south of the player and covering him turn see-through
-  fadeSprites(px, pz) {
+  fadeSprites(px, pz, dt = 0.016) {
     if (!this.tall) { this.tall = []; for (const s of Object.values(this.sets)) { if (!s.items || !s.setFade) continue; s.items.forEach((it, i) => { if (it.h >= 1.6) this.tall.push({ s, i, it }); }); } }
-    for (const t of this.tall) { const it = t.it, dz = it.z - pz, near = dz > 0 && dz < it.h * 0.85 && Math.abs(it.x - px) < it.w * 0.42; if (near) t.on = true; if (near || t.on) { t.s.setFade(t.i, near ? 0.38 : 1); if (!near) t.on = false; } }
+    // smooth fade out and back in (same feel as the walls): opacity eases toward its target instead of jumping
+    const k = 1 - Math.exp(-dt * 6); if (!this.fading) this.fading = new Set();
+    for (const t of this.tall) { const it = t.it, dz = it.z - pz; if (dz > 0 && dz < it.h * 0.85 && Math.abs(it.x - px) < it.w * 0.42) this.fading.add(t); }
+    for (const t of this.fading) { const it = t.it, dz = it.z - pz, near = dz > 0 && dz < it.h * 0.85 && Math.abs(it.x - px) < it.w * 0.42, goal = near ? 0.35 : 1; t.a = (t.a ?? 1) + (goal - (t.a ?? 1)) * k; if (Math.abs(t.a - goal) < 0.01) t.a = goal; t.s.setFade(t.i, t.a); if (!near && t.a === 1) this.fading.delete(t); }
   }
   faceAll() { for (const s of Object.values(this.sets)) s.face(); }
   spot(kind, x, z) { (this.spots[kind] = this.spots[kind] || []).push([x, z]); }
