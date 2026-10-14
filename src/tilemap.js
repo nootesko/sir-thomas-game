@@ -6,7 +6,7 @@ export const T = { grass: 0, cobble: 1, dirt: 2, water: 3, plaza: 4, sewer: 5, s
 const PRIORITY = { 0: 1, 1: 3, 2: 2, 3: 6, 4: 4, 5: 3, 6: 6, 7: 2, 8: 5, 9: 3, 10: 3, 11: 2 };   // higher spreads its border over lower
 // walking cost per terrain for pedestrians (they keep to sidewalks and paths; roads and lawns cost more)
 export const WALK_COST = { 0: 1.6, 1: 1.9, 2: 1.2, 4: 1.0, 5: 1.0, 7: 1.8, 8: 1.0, 9: 1.0, 10: 1.0, 11: 1.1, 16: 1.0 };
-const CELLS = 5, CELL = 128;   // atlas: 5x5 cells of 128px
+const CELLS = 5, CELL = 512;   // atlas: 5x5 cells of 512px (painted ground art keeps its detail)
 const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]];   // N E S W NE SE SW NW (z grows south)
 let seed = 99; const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
@@ -74,7 +74,9 @@ export class TileMap {
     for (const [t, img] of Object.entries(images)) { const i = +t; x.drawImage(img, (i % CELLS) * CELL, Math.floor(i / CELLS) * CELL, CELL, CELL); }
     this.atlasTex.needsUpdate = true;
   }
-  uvCell(t) { const u0 = (t % CELLS) / CELLS, v0 = 1 - (Math.floor(t / CELLS) + 1) / CELLS; return [u0, v0, u0 + 1 / CELLS, v0 + 1 / CELLS]; }
+  // span[t] = K: one image covers K x K tiles (painted textures are drawn at their real scale), so each tile takes its slice
+  uvCell(t, ix = 0, iz = 0) { const u0 = (t % CELLS) / CELLS, v0 = 1 - (Math.floor(t / CELLS) + 1) / CELLS, K = (this.span && this.span[t]) || 1, s = 1 / CELLS / K;
+    if (K === 1) return [u0, v0, u0 + 1 / CELLS, v0 + 1 / CELLS]; const a = ((ix % K) + K) % K, b = K - 1 - ((iz % K) + K) % K; return [u0 + a * s, v0 + b * s, u0 + (a + 1) * s, v0 + (b + 1) * s]; }
   build() {
     for (const m of this.meshes) this.scene.remove(m); this.meshes = [];
     const CH = 40, pad = 0.0005;
@@ -83,11 +85,11 @@ export class TileMap {
       const quad = (o, x0, z0, x1, z1, y, [u0, v0, u1, v1], m) => { o.p.push(x0, y, z0, x0, y, z1, x1, y, z0, x1, y, z0, x0, y, z1, x1, y, z1); o.uv.push(u0 + pad, v1 - pad, u0 + pad, v0 + pad, u1 - pad, v1 - pad, u1 - pad, v1 - pad, u0 + pad, v0 + pad, u1 - pad, v0 + pad); for (let i = 0; i < 6; i++) o.n.push(0, 1, 0); if (m) o.uv1.push(m[0], m[3], m[0], m[1], m[2], m[3], m[2], m[3], m[0], m[1], m[2], m[1]); };
       for (let iz = cz; iz < Math.min(this.N, cz + CH); iz++) for (let ix = cx; ix < Math.min(this.N, cx + CH); ix++) {
         const t = this.terrain[iz * this.N + ix]; const x0 = -this.world + ix * TILE, z0 = -this.world + iz * TILE;
-        quad(base, x0, z0, x0 + TILE, z0 + TILE, 0, this.uvCell(t));
+        quad(base, x0, z0, x0 + TILE, z0 + TILE, 0, this.uvCell(t, ix, iz));
         // transitions: each neighbour of higher priority paints its border over this tile
         for (let k = 0; k < 8; k++) { const nt = this.get(ix + DIRS[k][0], iz + DIRS[k][1]); if (nt < 0 || nt === t || PRIORITY[nt] <= PRIORITY[t]) continue;
           if (k >= 4) { const a = this.get(ix + DIRS[k][0], iz), b = this.get(ix, iz + DIRS[k][1]); if (a === nt || b === nt) continue; }   // corner only when no straight edge already covers it
-          const mu0 = (k % 4) / 4, mv0 = 1 - (Math.floor(k / 4) + 1) / 2; quad(edge, x0, z0, x0 + TILE, z0 + TILE, 0.01 + k * 0.0005, this.uvCell(nt), [mu0, mv0, mu0 + 0.25, mv0 + 0.5]); }
+          const mu0 = (k % 4) / 4, mv0 = 1 - (Math.floor(k / 4) + 1) / 2; quad(edge, x0, z0, x0 + TILE, z0 + TILE, 0.01 + k * 0.0005, this.uvCell(nt, ix, iz), [mu0, mv0, mu0 + 0.25, mv0 + 0.5]); }
       }
       const mk = (o, mat, withUv1) => { if (!o.p.length) return; const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(o.p, 3)); gg.setAttribute('uv', new THREE.Float32BufferAttribute(o.uv, 2)); gg.setAttribute('normal', new THREE.Float32BufferAttribute(o.n, 3)); if (withUv1) gg.setAttribute('uv1', new THREE.Float32BufferAttribute(o.uv1, 2)); const m = new THREE.Mesh(gg, mat); m.receiveShadow = true; this.scene.add(m); this.meshes.push(m); };
       mk(base, this.baseMat, false); mk(edge, this.edgeMat, true);
