@@ -26,7 +26,7 @@ export const MONSTERS = {
   geleca:    { name: 'Geleca', hp: 45, dmg: 9, speed: 3.6, aggro: 11, xp: 22, h: 1.0, fb: 'SNAKE', drops: [['gosma', 0.6]], gold: [2, 6], respawn: 40, rare: [['pocao_p', 0.08]], slows: true },
   rei_geleca:{ name: 'Rei Geleca', hp: 380, dmg: 22, speed: 3.2, aggro: 16, xp: 220, h: 2.6, fb: 'SNAKE', drops: [['gosma', 1.0], ['pocao_g', 0.8]], gold: [70, 120], respawn: 1200, rare: [['coroa_geleca', 1.0]], slows: true, boss: true, split: 'geleca' },
   gaviao:    { name: 'Gavião', hp: 30, dmg: 9, speed: 8.5, aggro: 15, xp: 18, h: 1.0, fly: 1.6, fb: 'BAT', drops: [['pena', 0.55]], gold: [1, 4], respawn: 35 },
-  dragao:    { name: 'Dragão Vermelho', hp: 900, dmg: 34, speed: 5.5, aggro: 22, xp: 600, h: 5.2, fly: 0.6, fb: 'BAT', drops: [['escama_vermelha', 1.0], ['escama_vermelha', 1.0], ['escama_dragao', 1.0]], gold: [300, 500], respawn: 1800, rare: [['olho_dragao', 1.0]], burns: true, boss: true },
+  dragao:    { name: 'Dragão Vermelho', hp: 900, dmg: 34, speed: 5.5, aggro: 22, xp: 600, h: 5.2, fb: 'BAT', drops: [['escama_vermelha', 1.0], ['escama_vermelha', 1.0], ['escama_dragao', 1.0]], gold: [300, 500], respawn: 1800, rare: [['olho_dragao', 1.0]], burns: true, boss: true },
   // Cripta Antiga (Guilda dos Aventureiros): KayKit skeletons, the Rei Esqueleto raises more of them at half life
   esqueleto:   { name: 'Esqueleto', hp: 55, dmg: 11, speed: 4.6, aggro: 15, xp: 26, h: 1.65, fb: 'SPIDER', drops: [['osso', 0.6]], gold: [3, 10], respawn: 120, rare: [['escudo_ferro', 0.03]] },
   esqueleto_guerreiro: { name: 'Esqueleto Guerreiro', hp: 90, dmg: 15, speed: 4.4, aggro: 16, xp: 42, h: 1.8, fb: 'SPIDER', drops: [['osso', 0.8]], gold: [6, 16], respawn: 150, rare: [['escudo_bronze', 0.03]] },
