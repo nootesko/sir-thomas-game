@@ -14,7 +14,7 @@ export const PERF = {
   shadowSize: 1024,
   lights: tier === 'high' ? 6 : 4,
   maxScale: Math.min(window.devicePixelRatio || 1, tier === 'high' ? 2 : 1.25),
-  minScale: tier === 'high' ? 0.8 : 0.6,
+  minScale: tier === 'high' ? Math.min(1, window.devicePixelRatio || 1) : 0.6,   // a PC never drops below its native resolution (that looked pixelated); phones still do
   dynamic: !q.has('nodyn'),
   cullR: 34,        // animated models farther than this from the player are neither drawn nor animated
   blob: tier !== 'high',

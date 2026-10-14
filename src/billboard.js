@@ -32,7 +32,8 @@ export function spriteTexture(src) {
   t = new THREE.Texture(src); t.needsUpdate = true; t.magFilter = src.smooth ? THREE.LinearFilter : THREE.NearestFilter; t.minFilter = src.smooth ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter; t.colorSpace = THREE.SRGBColorSpace; texCache.set(src, t); return t;
 }
 const matCache = new Map(), ownMats = new Set();
-function build(src, opts) { const m = new THREE.MeshBasicMaterial({ map: spriteTexture(src), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: true, fog: opts.fog !== false }); return opts.feet === false ? m : patch(m); }
+function build(src, opts) { const m = new THREE.MeshBasicMaterial({ map: spriteTexture(src), transparent: true, alphaTest: src.smooth ? 0.06 : 0.5, alphaToCoverage: !!src.smooth,   // HD art: soft antialiased edges (MSAA)
+   side: THREE.DoubleSide, depthWrite: true, fog: opts.fog !== false }); return opts.feet === false ? m : patch(m); }
 // shared material for everything drawn from the same image (static sets, props)
 export function spriteMaterial(src, opts = {}) { const k = src; if (matCache.has(k)) return matCache.get(k); const m = build(src, opts); matCache.set(k, m); return m; }
 // private material for a sprite that animates frames or flashes its own color

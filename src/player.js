@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as S from './sprites.js';
 import { Assets } from './assets.js';
-import { makeBillboard, faceView } from './billboard.js';
+import { makeBillboard, faceView, setBillboardImage } from './billboard.js';
 import { Walker } from './anim.js';
 import { Models, Actor, applyLook, CHAR_MODELS, thomasLook } from './models.js';
 import { ITEMS } from './items.js';
@@ -27,6 +27,9 @@ export class Player {
     const src = frames ? frames.down[0] : Assets.has('sprite_thomas') ? Assets.images.sprite_thomas : S.human(look);
     this.h = 1.9; this.w = this.h * src.width / src.height; this.mesh = makeBillboard(src, this.w, this.h, true); this.mesh.material.depthTest = false; this.mesh.renderOrder = 20; game.scene.add(this.mesh);   // always visible, even behind roofs and trees
     this.walker = new Walker(this.mesh, frames); this.running = false;
+    // optional extra sheets in the same 4-direction layout: attack (3 frames: wind-up, strike, follow-through) and block
+    this.atkFrames = frames && Assets.has('sheet_thomas_attack') ? Assets.animAuto('sheet_thomas_attack') : null; this.blockFrames = frames && Assets.has('sheet_thomas_block') ? Assets.animAuto('sheet_thomas_block') : null;
+    this.upp = frames ? this.h / frames.down[0].height : 0;   // world units per sprite pixel: every sheet keeps the same scale, whatever its cell size
     // 3D body (Diablo look): the KayKit knight, animated; the sprite stays as fallback when the model is missing
     const cm = CHAR_MODELS.thomas; this.actor = cm && Models.has(cm.model) ? new Actor(cm.model, { height: cm.h }) : null;
     if (this.actor) { this.mesh.visible = false; this.h = cm.h; this.rebuildLook(); }
@@ -143,9 +146,12 @@ export class Player {
     const hop = this.moving && !wk.has ? Math.abs(Math.sin(this.bobT)) * 0.08 : 0; const lunge = sw * 0.45 + (this.dodge > 0 ? 0.2 : 0);
     m.position.set(this.pos.x + f.x * lunge, hop, this.pos.z + f.z * lunge); faceView(m);
     m.rotation.z = (this.dodge > 0 ? Math.sin(this.dodge / 0.28 * Math.PI) * 0.5 : sw * 0.3) * (f.x < -0.05 ? 1 : -1) + (this.moving && !wk.has ? Math.sin(this.bobT) * 0.05 : 0);
-    if (wk.has) { wk.face(f.x, f.z); wk.update(dt, this.moving, this.running ? 11 : 8); m.scale.x = this.w * (this.blocking ? 0.9 : 1); }   // sheet: real steps in the facing direction
+    let pose = null; if (wk.has) { wk.face(f.x, f.z); const set = this.swing >= 0 && this.atkFrames ? this.atkFrames : this.blocking && this.blockFrames ? this.blockFrames : null;
+      if (set) { const fr = set[wk.dir] || set.down; pose = set === this.atkFrames ? fr[Math.min(fr.length - 1, Math.floor(this.swing * fr.length))] : fr[Math.min(fr.length - 1, 1)]; if (pose !== wk.cur) { wk.cur = pose; setBillboardImage(m, pose); } } else wk.update(dt, this.moving, this.running ? 11 : 8); }
+    if (wk.has) { const img = wk.cur; m.scale.x = img ? img.width * this.upp : this.w; if (!pose) m.scale.x *= this.blocking && !this.blockFrames ? 0.9 : 1; }   // sheet: real steps in the facing direction
     else m.scale.x = (f.x < -0.05 ? -1 : 1) * this.w * (this.blocking ? 0.9 : 1);   // single image: mirrored when facing west, a small sway when walking
-    m.scale.y = this.h * (this.blocking ? 0.92 : 1);
+    m.scale.y = wk.has && wk.cur ? wk.cur.height * this.upp * (this.blocking && !this.blockFrames ? 0.92 : 1) : this.h * (this.blocking ? 0.92 : 1);
+    if (pose) m.rotation.z = 0;   // drawn poses carry the motion themselves
     m.material.color.setHex(this.hurtT > 0 ? 0xff6060 : this.blocking ? 0xa0c0ff : this.game.sky.tint);
     this.shadow.position.x = this.pos.x; this.shadow.position.z = this.pos.z;
     const s = this.slash; s.visible = sw > 0.05; if (s.visible) { s.position.set(this.pos.x, 0.12, this.pos.z); s.rotation.set(-Math.PI / 2, 0, this.yaw + Math.PI / 2 - 0.9); s.material.opacity = 0.85 * sw; s.scale.setScalar(0.7 + 0.4 * this.swing); }
