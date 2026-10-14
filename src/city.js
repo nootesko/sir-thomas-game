@@ -34,7 +34,7 @@ export class City {
     this.scene = scene; this.colliders = []; this.dynamic = []; this.buildings = []; this.roads = []; this.trees = []; this.lamps = []; this.scorch = [];
     this.doors = []; this.houses = []; this.containers = []; this.notes = []; this.floors = []; this.spots = {}; this.streets = []; this.fadeables = [];
     this.sets = {}; this.f3d = {}; this.torchLights = []; this.night = false; this.winter = false; this.darkness = 0;
-    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.decorateStreets(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.unstickBanners(); this.buildBridge(); this.buildWater();
+    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.unstickBanners(); this.buildBridge(); this.buildWater();
     for (const d of this.doors) this.dynamic.push(d.col);   // doors block only while closed; never baked into the walk grid
     this.buildHash();
     // painter's order: every solid thing of the city sorts by its footprint on the ground (see billboard.js); the tile floor stays as is
@@ -474,9 +474,9 @@ export class City {
     tm.fillRect(-163, -WORLD, -137, WORLD, T.water);
     tm.fillRect(WALL + 175, -WORLD, WORLD, WORLD, T.forest);   // the eastern forest floor: tall grass
     paintRegions(this, tm);
-    tm.fillRect(-86, -86, -34, -34, T.walk); tm.fillRect(-80, -62, -38, -36, T.walk); tm.fillRect(-84, -60, -72, -40, T.grass); tm.fillRect(-46, -60, -36, -40, T.grass);   // castle courtyard with lawns
+    tm.fillRect(-86, -86, -34, -34, T.plaza); tm.fillRect(-80, -62, -38, -36, T.plaza); tm.fillRect(-84, -60, -72, -40, T.grass); tm.fillRect(-46, -60, -36, -40, T.grass);   // castle courtyard with lawns
     tm.fillRect(-26, -86, 26, -34, T.plaza); tm.fillRect(-26, -86, -14, -74, T.grass); tm.fillRect(14, -86, 26, -74, T.grass);   // Praça da Luz
-    tm.fillCircle(0, 0, this.plazaR, T.plaza); tm.fillRect(-26, -26, -6, -6, T.walk);   // Praça da Fonte, Mercado
+    tm.fillCircle(0, 0, this.plazaR, T.plaza); tm.fillRect(-26, -26, -6, -6, T.plaza);   // Praça da Fonte, Mercado
     tm.fillRect(6, -26, 26, -6, T.gravel); tm.fillRect(-26, 6, -6, 26, T.grass); tm.fillRect(-18, 6, -14, 10, T.gravel); tm.fillRect(6, 6, 26, 26, T.gravel);   // tavern yard, chapel lawn, smithy yard
     tm.fillRect(34, -84, 84, -62, T.dirt);   // Campo de Treino
     for (const p of this.plots) tm.fillRect(p.x - p.w / 2, p.z - p.d / 2, p.x + p.w / 2, p.z + p.d / 2, T.soil);   // Hortas
