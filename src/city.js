@@ -6,7 +6,7 @@ import { TileMap, T, TILE } from './tilemap.js';
 import { Assets, TOP, sliceSheet } from './assets.js';
 import * as PX from './pixel.js';
 import * as S from './sprites.js';
-import { BillboardSet, setBillboardImage, groundDepth } from './billboard.js';
+import { BillboardSet, setBillboardImage, groundDepth, spriteMaterial } from './billboard.js';
 import { Models, ModelSet, PropSet, PROP_MODELS } from './models.js';
 import { VIEW } from './view.js';
 import { familyFor, SPECIAL, JOBS } from './houses.js';
@@ -62,6 +62,7 @@ export class City {
   // the user's painted objects replace the old sprites of a set; the drawn height is kept and the width follows the art
   userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
       cut(Assets.images.arbustos_pedras, 4, 2, ['bush', 'bushBig', 'bushBerry', 'hedge', 'pebbles', 'rock', 'rockMoss', 'cliff']);
+      cut(Assets.images.inverno, 4, 2, ['W_treeRound', 'W_oak', 'W_pineSmall', 'W_pine', 'W_dead', 'W_bush', 'W_rock', 'W_grass']);
       cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
   // nature on the ground (trees, stones, bushes, grass, flowers) casts no drop shadow (user's choice)
   static NO_SHADOW = /^(oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
@@ -382,10 +383,13 @@ export class City {
     this.winter = on; this.paintTiles(on);
     this.sets.pine.visible = !on; this.sets.big.visible = !on; this.sets.pineW.visible = on; this.sets.bigW.visible = on; this.scorchGroup.visible = on;
     if (this.sets.oak && this.sets.oak.ps) this.sets.oak.setColor(on ? 0xdde8f4 : 0xffffff);
-    else if (this.sets.oak) { const img = on ? PX.propOak(true) : Assets.src(TOP('sprite_tree_oak'), PX.propOak(false)); this.sets.oak.mesh.material = this.sets.oak.mesh.material.clone(); const t = new THREE.Texture(img); t.needsUpdate = true; t.magFilter = THREE.NearestFilter; t.colorSpace = THREE.SRGBColorSpace; this.sets.oak.mesh.material.map = t; }
-    this.sets.rock.setColor(on ? 0xc9d6e2 : 0xffffff);
+    else if (this.sets.oak && !this.userArt('oak')) { const img = on ? PX.propOak(true) : Assets.src(TOP('sprite_tree_oak'), PX.propOak(false)); this.sets.oak.mesh.material = this.sets.oak.mesh.material.clone(); const t = new THREE.Texture(img); t.needsUpdate = true; t.magFilter = THREE.NearestFilter; t.colorSpace = THREE.SRGBColorSpace; this.sets.oak.mesh.material.map = t; }
+    if (!this.userArt('W_rock')) this.sets.rock.setColor(on ? 0xc9d6e2 : 0xffffff);
     for (const k of ['forest/Grass_1_A', 'forest/Grass_2_A']) if (this.f3d[k]) this.f3d[k].visible = !on;
-    for (const k in this.sets) if (k.startsWith('plant_')) this.sets[k].visible = !on;   // ground plants sleep under the snow   // tufts sleep under the snow
+    for (const k in this.sets) if (k.startsWith('plant_')) this.sets[k].visible = !on || k === 'plant_tufoA';   // ground plants sleep under the snow (dry grass stays)
+    // the user's winter art: each set swaps to its snowy drawing and back
+    const WIN = { oak: 'W_oak', pineW: 'W_pine', bigW: 'W_dead', bush: 'W_bush', bushBig: 'W_bush', bushBerry: 'W_bush', hedge: 'W_bush', rock: 'W_rock', rockMoss: 'W_rock', cliff: 'W_rock', plant_tufoA: 'W_grass' };
+    for (const [k, w] of Object.entries(WIN)) { const set = this.sets[k], art = this.userArt(w); if (!set || !set.mesh || !art) continue; if (!set.summerMat) set.summerMat = set.mesh.material; set.mesh.material = on ? spriteMaterial(art) : set.summerMat; }   // tufts sleep under the snow
     if (this.f3d['forest/Bush_1_A']) this.f3d['forest/Bush_1_A'].setColor(on ? 0xe4ecf6 : 0xffffff);
   }
   // darkness 0..1 drives plaza lamps and lit windows
