@@ -7,6 +7,7 @@ import { T } from './tilemap.js';
 import { PropSet, Models } from './models.js';
 import { Assets } from './assets.js';
 import { BillboardSet } from './billboard.js';
+import { layoutTowns, paintTowns } from './towns.js';
 
 // name shown on the HUD; rectangles are tested in order
 export const REGIONS = [
@@ -101,7 +102,8 @@ export function buildRegions(c) {
   for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2; const r = 40 + Math.sin(i * 1.7) * 3; const x = -95 + Math.cos(a) * r, z = -300 + Math.sin(a) * r * 0.9; if (Math.abs(x + 95) < 5 && z > -300) continue; const s = i % 2 ? cliff2 : cliff; if (s) { s.add(x, z, R(2.6, 3.6), a); c.addCircle(x, z, 2.4); } }
   for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; const x = -95 + Math.cos(a) * 14, z = -310 + Math.sin(a) * 12; (i % 2 ? obel : col) && (i % 2 ? obel : col).add(x, z, R(3.5, 5), a); c.addCircle(x, z, 0.8); }
   const nestMat = new THREE.MeshLambertMaterial({ color: 0x8a5a2e }); H.nests = [];
-  for (const [x, z, r] of [[-95, -318, 4], [-120, -295, 2.5], [-70, -292, 2.5], [-110, -330, 2], [-78, -328, 2]]) { const m = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.35, 6, 14), nestMat); m.rotation.x = -Math.PI / 2; m.position.set(x, r * 0.3, z); c.scene.add(m); c.addCircle(x, z, r * 0.6); H.nests.push([x, z]); }
+  const nestArt = c.userArt('nest'), nestSet = nestArt ? new BillboardSet(c.scene, nestArt, 8, 0) : null; if (nestSet) c.sets.nests = nestSet;
+  for (const [x, z, r] of [[-95, -318, 4], [-120, -295, 2.5], [-70, -292, 2.5], [-110, -330, 2], [-78, -328, 2]]) { if (nestSet) { nestSet.add(x, z, r * 2.6, r * 2.6 * nestArt.height / nestArt.width); c.addCircle(x, z, r * 0.6); H.nests.push([x, z]); continue; } const m = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.35, 6, 14), nestMat); m.rotation.x = -Math.PI / 2; m.position.set(x, r * 0.3, z); c.scene.add(m); c.addCircle(x, z, r * 0.6); H.nests.push([x, z]); }
   H.king = [-95, -318]; H.spawns = [[-125, -270], [-60, -275], [-130, -320], [-55, -335], [-100, -270]];
   // ---------- Skull Gorge and the Red Dragon's lair ----------
   const S = D.desfiladeiro = { lair: new THREE.Vector3(305, 0, 305) };
@@ -116,13 +118,14 @@ export function buildRegions(c) {
   for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(1.5, 10, 8), hole); e.position.set(s * 2.2, 5.6, 4.4); sk.add(e); } const nose = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.6, 3), hole); nose.rotation.x = Math.PI; nose.position.set(0, 3.6, 4.9); sk.add(nose);
   sk.position.set(160, 0, 118); sk.rotation.y = 0.5; c.scene.add(sk); c.addCircle(160, 118, 6); S.skull = sk;
   // lava pool in the lair
-  S.lavaMat = new THREE.MeshBasicMaterial({ color: 0xff6a10 }); const lava = new THREE.Mesh(new THREE.CircleGeometry(8, 20), S.lavaMat); lava.rotation.x = -Math.PI / 2; lava.position.set(322, 0.06, 322); c.scene.add(lava); c.addCircle(322, 322, 8.2); S.lava = lava;
+  S.lavaMat = new THREE.MeshBasicMaterial({ color: 0xffffff, map: (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'); const g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, '#fff2a0'); g.addColorStop(0.35, '#ffb020'); g.addColorStop(0.7, '#e0400a'); g.addColorStop(0.92, '#6a1004'); g.addColorStop(1, '#2a0802'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 40; i++) { const px = 128 + R(-95, 95), pz = 128 + R(-95, 95), rr = R(4, 14), gg = x.createRadialGradient(px, pz, 0, px, pz, rr); gg.addColorStop(0, i % 3 ? 'rgba(255,240,150,0.8)' : 'rgba(90,15,4,0.6)'); gg.addColorStop(1, 'rgba(255,120,20,0)'); x.fillStyle = gg; x.beginPath(); x.arc(px, pz, rr, 0, 7); x.fill(); } const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; })(), transparent: true }); const lava = new THREE.Mesh(new THREE.CircleGeometry(8, 20), S.lavaMat); lava.rotation.x = -Math.PI / 2; lava.position.set(322, 0.06, 322); c.scene.add(lava); c.addCircle(322, 322, 8.2); S.lava = lava;
   const lavaLight = new THREE.PointLight(0xff5a10, 30, 30, 1.6); lavaLight.position.set(322, 3, 322); c.scene.add(lavaLight);
   S.dragon = [300, 296]; S.spawns = [[200, 175], [230, 205], [255, 245], [215, 190], [265, 262], [185, 150]];
   // ---------- Frozen Forest: the Wise Owl's tree and the Ice Werewolf's den (Chapter III) ----------
   const F = D.floresta = { owl: [322, -58], den: [330, 70] };
   if (cliff) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; if (Math.abs(a - Math.PI) < 0.45) continue; const x = 330 + Math.cos(a) * 17, z = 70 + Math.sin(a) * 15; cliff.add(x, z, R(2.4, 3.4), a); c.addCircle(x, z, 2.4); }   // ring of rocks, open to the west
   const bigP = tinted('owlTree', 'forest/Tree_4_B', 0xe4ecf6, 4); tree(bigP, 330, -62, 13, 2.4);   // the owl's great tree
+  layoutTowns(c);
   if (stump) { stump.add(322, -55, 1.2, 0); c.addCircle(322, -55, 0.7); }
   for (let i = 0; i < 12; i++) { const a = R(0, 6.28), r = R(8, 20); tree(sp, 322 + Math.cos(a) * r, -58 + Math.sin(a) * r, R(5, 8)); }
   return D;
@@ -139,4 +142,5 @@ export function paintRegions(c, tm) {
   tm.fillRect(135, 110, 352, 352, T.rock); tm.fillCircle(305, 305, 34, T.ash);
   for (const r of c.roads) tm.fillRect(r.x - r.w / 2, r.z - r.d / 2, r.x + r.w / 2, r.z + r.d / 2, T.dirt);   // roads on top
   tm.fillRect(D.bridge.x0, D.bridge.z0, D.bridge.x1, D.bridge.z1, T.planks);   // bridge over the river
+  paintTowns(c, tm);
 }

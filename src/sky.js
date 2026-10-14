@@ -7,7 +7,7 @@ const PRESETS = {
   day:    { bg: 0x7ec8ff, fog: 0xa8ddff, near: 90, far: 420, sun: 0xffe6b8, sunI: 2.0, sky: 0xd6ecff, ground: 0x9a8a5a, hemiI: 1.35, tint: 0xffffff, sunPos: [60, 90, 30], tex: 'day' },
   dusk:   { bg: 0xf0a060, fog: 0xf2b07a, near: 70, far: 380, sun: 0xffb060, sunI: 1.1, sky: 0xf0b080, ground: 0x5a6a3a, hemiI: 0.8, tint: 0xffd9b0, sunPos: [-90, 25, 40], tex: 'dusk' },
   night:  { bg: 0x070b1f, fog: 0x0a1030, near: 25, far: 200, sun: 0x6f84ff, sunI: 0.5, sky: 0x2e3a6c, ground: 0x14141f, hemiI: 0.6, tint: 0x6f7fb8, sunPos: [-40, 70, -60], tex: 'night' },
-  under:  { bg: 0x07060c, fog: 0x0a0812, near: 14, far: 55, sun: 0x8a7aa0, sunI: 0.25, sky: 0x4a4060, ground: 0x15121c, hemiI: 0.55, tint: 0x8a80a0, sunPos: [20, 80, 20], tex: 'night' },
+  under:  { bg: 0x07060c, fog: 0x0a0812, near: 22, far: 75, sun: 0x9a8ab0, sunI: 0.45, sky: 0x6a6088, ground: 0x2a2434, hemiI: 1.0, tint: 0x8a80a0, sunPos: [20, 80, 20], tex: 'night' },
   winter: { bg: 0xb9c9d6, fog: 0xd0dce6, near: 18, far: 140, sun: 0xe8f0ff, sunI: 0.9, sky: 0xcfdcea, ground: 0x8d9db0, hemiI: 0.9, tint: 0xe4ecf4, sunPos: [40, 50, 60], tex: 'winter' },
 };
 export class Sky {

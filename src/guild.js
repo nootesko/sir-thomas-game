@@ -32,7 +32,7 @@ export function buildCrypt(city) {
   city.cryptLights = [];
   const torch = city.fset ? city.fset('dng_torch_lit') : null;
   for (const [x, z] of [[C.x1 - 10, C.z1 - 8], [C.x1 - 45, C.z1 - 15], [cx, cz], [C.x0 + 20, cz + 30], [C.x0 + 60, C.z0 + 35], [C.boss[0], C.boss[1] + 12], [C.boss[0] + 18, C.boss[1]], [cx + 30, C.z0 + 20]]) {
-    if (torch) torch.add(x, z, 1.4, 0); const l = new THREE.PointLight(0xff9a40, 16, 22, 1.5); l.position.set(x, 2.4, z); city.scene.add(l); city.cryptLights.push(l); }
+    if (torch) torch.add(x, z, 1.4, 0); const l = new THREE.PointLight(0xffa850, 34, 30, 1.3); l.position.set(x, 2.4, z); city.scene.add(l); city.cryptLights.push(l); }
   // the throne: a dais and a stone chair
   if (Assets.has('art_throne')) { city.addBox(C.boss[0], C.boss[1] - 9, 3, 1.4); return; }   // the throne is the user's art (a sprite placed by main.js)
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(6, 6.5, 0.3, 16), mat); dais.position.set(C.boss[0], 0.15, C.boss[1] - 6); city.scene.add(dais);
