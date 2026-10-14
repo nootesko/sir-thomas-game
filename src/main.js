@@ -14,7 +14,7 @@ import { Quests } from './quests.js';
 import { NPC, Boss, Prop } from './entities.js';
 import { Monster, Loot, MONSTERS } from './monsters.js';
 import { ITEMS, SLOTS, sellPrice } from './items.js';
-import { City, WALL, SEWER, CAVE } from './city.js';
+import { City, WALL, SEWER, CAVE, WORLD } from './city.js';
 import { JOBS } from './houses.js';
 import { Lockpick, DIFF_NAMES } from './lockpick.js';
 import { VIEW } from './view.js';
@@ -51,7 +51,14 @@ class Game {
     this.snow = new Snow(this.scene); this.lights = new LightPool(this.scene, PERF.lights); this.merged = mergeStatic(this.scene, [this]);
     this.governor = new FrameGovernor(s => { this.renderer.setPixelRatio(s); this.resize(); }); this.slowT = 0;
     document.getElementById('minimap-wrap').addEventListener('click', e => { e.stopPropagation(); if (this.running) this.toggleMap(true); });
-    document.getElementById('bigmap-wrap').addEventListener('click', () => this.toggleMap(false, true));
+    // admin mode (?adm in the URL once, remembered in this browser; ?adm=0 turns it off): a click on the big map travels there
+    { const q = new URLSearchParams(location.search); try { if (q.has('adm')) localStorage.setItem('fortaleza-adm', q.get('adm') === '0' ? '0' : '1'); this.admin = localStorage.getItem('fortaleza-adm') === '1'; } catch (e) { this.admin = q.has('adm') && q.get('adm') !== '0'; } }
+    if (this.admin) { const hint = document.querySelector('#bigmap-wrap .small'); if (hint) hint.textContent = 'ADM: clique no mapa para viajar até lá · M fecha'; }
+    document.getElementById('bigmap-wrap').addEventListener('click', e => {
+      const cv = document.getElementById('bigmap'), r = cv.getBoundingClientRect();
+      if (this.admin && e.target === cv) { const mm = this.minimap, S = cv.width / mm.base.width, px = (e.clientX - r.left) * cv.width / r.width, pz = (e.clientY - r.top) * cv.height / r.height;
+        const wx = px / S / mm.PPU - WORLD, wz = pz / S / mm.PPU - WORLD, [fx, fz] = this.city.nearestFree(wx, wz); this.toggleMap(false, true); this.travel(fx, fz, this.city.regionAt(fx, fz)); return; }
+      this.toggleMap(false, true); });
     // no title menu: the page opens straight into the game, continuing the saved game when there is one (`?novo` in the URL starts over)
     if (new URLSearchParams(location.search).has('novo')) { try { localStorage.removeItem('fortaleza25d-save'); } catch (e) {} }
     const save = (() => { try { return JSON.parse(localStorage.getItem('fortaleza25d-save')); } catch (e) { return null; } })();
