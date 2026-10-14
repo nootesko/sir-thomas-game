@@ -39,7 +39,7 @@ const rng = (() => { let s = 77; return () => (s = (s * 16807) % 2147483647) / 2
 const R = (a, b) => a + rng() * (b - a);
 
 export function buildRegions(c) {
-  const fs = (m) => c.fset(m), tinted = (key, model, tint, max = 600) => { if (!Models.has(model)) return null; if (!c.f3d[key]) { c.f3d[key] = new PropSet(c.scene, model, max); c.f3d[key].setColor(tint); } return c.f3d[key]; };
+  const fs = (m) => c.fset(m), tinted = (key, model, tint, max = 600) => { if (!Models.has(model)) return c.artSet(key, model, max); if (!c.f3d[key]) { c.f3d[key] = new PropSet(c.scene, model, max); c.f3d[key].setColor(tint); } return c.f3d[key]; };
   const tree = (set, x, z, h, r = 0.9) => { if (!set) return; set.add(x, z, h, R(0, 6.28)); c.addCircle(x, z, r); c.trees.push({ x, z }); };
   const stoneMat = c.mk(c.tex.stone, 1, 1); const D = c.regions = {};
   // ---------- roads ----------
@@ -119,7 +119,7 @@ export function buildRegions(c) {
   // ---------- Frozen Forest: the Wise Owl's tree and the Ice Werewolf's den (Chapter III) ----------
   const F = D.floresta = { owl: [322, -58], den: [330, 70] };
   if (cliff) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; if (Math.abs(a - Math.PI) < 0.45) continue; const x = 330 + Math.cos(a) * 17, z = 70 + Math.sin(a) * 15; cliff.add(x, z, R(2.4, 3.4), a); c.addCircle(x, z, 2.4); }   // ring of rocks, open to the west
-  const bigP = tinted('pineN2', 'forest/Tree_4_B', 0xe4ecf6, 300); tree(bigP, 330, -62, 16, 1.8);   // the owl's great tree
+  const bigP = tinted('owlTree', 'forest/Tree_4_B', 0xe4ecf6, 4); tree(bigP, 330, -62, 13, 2.4);   // the owl's great tree
   if (stump) { stump.add(322, -55, 1.2, 0); c.addCircle(322, -55, 0.7); }
   for (let i = 0; i < 12; i++) { const a = R(0, 6.28), r = R(8, 20); tree(sp, 322 + Math.cos(a) * r, -58 + Math.sin(a) * r, R(5, 8)); }
   return D;

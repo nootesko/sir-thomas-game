@@ -27,6 +27,8 @@ const oddNear = v => { const f = Math.floor(v); return (f % 2 === 0 || f % 2 ===
 const cell = (ix, iz) => ({ x0: BANDS[ix][0], x1: BANDS[ix][1], z0: BANDS[iz][0], z1: BANDS[iz][1] });
 const overlaps = (a, b, pad = 0) => !(a.x1 + pad < b.x0 || a.x0 - pad > b.x1 || a.z1 + pad < b.z0 || a.z0 - pad > b.z1);
 
+// crop a canvas to its visible pixels
+function trimAlpha(c) { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1; for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return c; const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height); return o; }
 export class City {
   constructor(scene) {
     this.scene = scene; this.colliders = []; this.dynamic = []; this.buildings = []; this.roads = []; this.trees = []; this.lamps = []; this.scorch = [];
@@ -63,14 +65,23 @@ export class City {
   userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
       cut(Assets.images.arbustos_pedras, 4, 2, ['bush', 'bushBig', 'bushBerry', 'hedge', 'pebbles', 'rock', 'rockMoss', 'cliff']);
       cut(Assets.images.inverno, 4, 2, ['W_treeRound', 'W_oak', 'W_pineSmall', 'W_pine', 'W_dead', 'W_bush', 'W_rock', 'W_grass']);
+      // irregular sheet (the owl tree spans both rows): boxes in the 1774 x 887 layout, trimmed to the drawing
+      const fr = Assets.images.floresta_regioes; if (fr) { const sx = fr.width / 1774, sy = fr.height / 887;
+        for (const [n, x0, y0, x1, y1] of [['stump', 25, 55, 410, 385], ['log', 445, 95, 930, 365], ['stalactiteHang', 1035, 35, 1390, 335], ['obelisk', 1435, 15, 1740, 405], ['column', 25, 435, 335, 840], ['nest', 340, 535, 735, 840], ['owlTree', 690, 275, 1415, 875], ['cavemouth', 1375, 465, 1770, 840]]) {
+          const c = document.createElement('canvas'); c.width = Math.round((x1 - x0) * sx); c.height = Math.round((y1 - y0) * sy); c.getContext('2d').drawImage(fr, x0 * sx, y0 * sy, c.width, c.height, 0, 0, c.width, c.height); const t = trimAlpha(c); t.smooth = true; this._art[n] = t; } }
       cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
   // nature on the ground (trees, stones, bushes, grass, flowers) casts no drop shadow (user's choice)
   static NO_SHADOW = /^(oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
+  // 2D stand-in for a 3D kit model used by the regions (stumps, obelisks, Neveo pines, gorge rocks...): the user's art as a
+  // billboard set with the PropSet signature add(x, z, height, rot, y)
+  artSet(key, model, max = 600) { const map = { nat_statue_obelisk: 'obelisk', nat_statue_column: 'column', nat_stump: 'stump', nat_log: 'log', 'forest/Tree_3_A': 'treeSwamp', 'forest/Tree_1_B': 'treeDark', 'forest/Rock_1_C': 'rockMoss', 'forest/Rock_3_B': 'cliff', 'forest/Rock_1_E': 'cliff', 'forest/Rock_3_A': 'rock' };
+    const art = this.userArt(key === 'owlTree' ? 'owlTree' : /^pineN/.test(key) ? 'W_pine' : map[model]); if (!art) return null; const id = 'art_' + key + '_' + model; if (this.sets[id]) return this.sets[id].wrap;
+    const s = new BillboardSet(this.scene, art, max, 0), k = art.width / art.height; this.sets[id] = s; s.wrap = { add: (x, z, h, rot, y = 0) => s.add(x, z, h * k, h, y), finalize: () => {}, setColor: () => {}, set visible(v) { s.visible = v; } }; return s.wrap; }
   set(name, src, max, w, h) { if (City.NO_SHADOW.test(name)) City.SHADOW[name] = 0; const art = this.userArt(name); if (art) { src = art; const s = new BillboardSet(this.scene, art, max, City.SHADOW[name] ?? 0.7), add = s.add.bind(s), k = art.width / art.height; s.add = (x, z, ww, hh, y) => add(x, z, hh * k, hh, y); s.w = h * k; s.h = h; this.sets[name] = s; return s; }
     const pm = PROP_MODELS[name]; const s = pm && Models.has(pm.model) ? new ModelSet(this.scene, pm, max) : new BillboardSet(this.scene, src, max, City.SHADOW[name] ?? 0.7); s.w = w; s.h = h; this.sets[name] = s; return s; }
   finalizeSets() { for (const s of Object.values(this.sets)) s.finalize(); for (const s of Object.values(this.f3d)) s.finalize(); }
   // instanced 3D furniture and fixtures (KayKit / Kenney), one set per model; null when the model is missing
-  fset(model, max = 400, shadow = true) { if (!Models.has(model)) return null; return this.f3d[model] || (this.f3d[model] = new PropSet(this.scene, model, max, { shadow })); }
+  fset(model, max = 400, shadow = true) { if (!Models.has(model)) return this.artSet(model, model, max); return this.f3d[model] || (this.f3d[model] = new PropSet(this.scene, model, max, { shadow })); }
   // banners were placed on walls for the 3D era; on the ground they must stand just outside any wall or building
   unstickBanners() { const b = this.sets.banner; if (!b || !b.items) return; for (const it of b.items) { const [x, z] = this.nearestFree(it.x, it.z, 0.7); it.x = x; it.z = z; } b.fy = null; b.face(); }
   faceAll() { for (const s of Object.values(this.sets)) s.face(); }
