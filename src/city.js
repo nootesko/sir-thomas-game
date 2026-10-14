@@ -63,7 +63,9 @@ export class City {
   userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
       cut(Assets.images.arbustos_pedras, 4, 2, ['bush', 'bushBig', 'bushBerry', 'hedge', 'pebbles', 'rock', 'rockMoss', 'cliff']);
       cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
-  set(name, src, max, w, h) { const art = this.userArt(name); if (art) { src = art; const s = new BillboardSet(this.scene, art, max, City.SHADOW[name] ?? 0.7), add = s.add.bind(s), k = art.width / art.height; s.add = (x, z, ww, hh, y) => add(x, z, hh * k, hh, y); s.w = h * k; s.h = h; this.sets[name] = s; return s; }
+  // nature on the ground (trees, stones, bushes, grass, flowers) casts no drop shadow (user's choice)
+  static NO_SHADOW = /^(oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
+  set(name, src, max, w, h) { if (City.NO_SHADOW.test(name)) City.SHADOW[name] = 0; const art = this.userArt(name); if (art) { src = art; const s = new BillboardSet(this.scene, art, max, City.SHADOW[name] ?? 0.7), add = s.add.bind(s), k = art.width / art.height; s.add = (x, z, ww, hh, y) => add(x, z, hh * k, hh, y); s.w = h * k; s.h = h; this.sets[name] = s; return s; }
     const pm = PROP_MODELS[name]; const s = pm && Models.has(pm.model) ? new ModelSet(this.scene, pm, max) : new BillboardSet(this.scene, src, max, City.SHADOW[name] ?? 0.7); s.w = w; s.h = h; this.sets[name] = s; return s; }
   finalizeSets() { for (const s of Object.values(this.sets)) s.finalize(); for (const s of Object.values(this.f3d)) s.finalize(); }
   // instanced 3D furniture and fixtures (KayKit / Kenney), one set per model; null when the model is missing
