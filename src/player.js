@@ -148,9 +148,11 @@ export class Player {
     m.rotation.z = (this.dodge > 0 ? Math.sin(this.dodge / 0.28 * Math.PI) * 0.5 : sw * 0.3) * (f.x < -0.05 ? 1 : -1) + (this.moving && !wk.has ? Math.sin(this.bobT) * 0.05 : 0);
     let pose = null; if (wk.has) { wk.face(f.x, f.z); const set = this.swing >= 0 && this.atkFrames ? this.atkFrames : this.blocking && this.blockFrames ? this.blockFrames : null;
       if (set) { const fr = set[wk.dir] || set.down; pose = set === this.atkFrames ? fr[Math.min(fr.length - 1, Math.floor(this.swing * fr.length))] : fr[Math.min(fr.length - 1, 1)]; if (pose !== wk.cur) { wk.cur = pose; setBillboardImage(m, pose); } } else wk.update(dt, this.moving, this.running ? 11 : 8); }
-    if (wk.has) { const img = wk.cur; m.scale.x = img ? img.width * this.upp : this.w; if (!pose) m.scale.x *= this.blocking && !this.blockFrames ? 0.9 : 1; }   // sheet: real steps in the facing direction
+    // the attack sheet is the user's original art at its own resolution: scaled by the ratio of the two sheets' row heights
+    const atkPose = pose && this.swing >= 0, u = atkPose ? this.upp * (Assets.images.sheet_thomas.height / 4) / (Assets.images.sheet_thomas_attack.height / 4) : this.upp;
+    if (wk.has) { const img = wk.cur; m.scale.x = img ? img.width * u : this.w; if (!pose) m.scale.x *= this.blocking && !this.blockFrames ? 0.9 : 1; }   // sheet: real steps in the facing direction
     else m.scale.x = (f.x < -0.05 ? -1 : 1) * this.w * (this.blocking ? 0.9 : 1);   // single image: mirrored when facing west, a small sway when walking
-    m.scale.y = wk.has && wk.cur ? wk.cur.height * this.upp * (this.blocking && !this.blockFrames ? 0.92 : 1) : this.h * (this.blocking ? 0.92 : 1);
+    m.scale.y = wk.has && wk.cur ? wk.cur.height * u * (this.blocking && !this.blockFrames ? 0.92 : 1) : this.h * (this.blocking ? 0.92 : 1);
     if (pose) m.rotation.z = 0;   // drawn poses carry the motion themselves
     m.material.color.setHex(this.hurtT > 0 ? 0xff6060 : this.blocking ? 0xa0c0ff : this.game.sky.tint);
     this.shadow.position.x = this.pos.x; this.shadow.position.z = this.pos.z;
