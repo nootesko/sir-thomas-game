@@ -26,7 +26,7 @@ export const MONSTERS = {
   geleca:    { name: 'Geleca', hp: 45, dmg: 9, speed: 3.6, aggro: 11, xp: 22, h: 1.0, fb: 'SNAKE', drops: [['gosma', 0.6]], gold: [2, 6], respawn: 40, rare: [['pocao_p', 0.08]], slows: true },
   rei_geleca:{ name: 'Rei Geleca', hp: 380, dmg: 22, speed: 3.2, aggro: 16, xp: 220, h: 2.6, fb: 'SNAKE', drops: [['gosma', 1.0], ['pocao_g', 0.8]], gold: [70, 120], respawn: 1200, rare: [['coroa_geleca', 1.0]], slows: true, boss: true, split: 'geleca' },
   gaviao:    { name: 'Gavião', hp: 30, dmg: 9, speed: 8.5, aggro: 15, xp: 18, h: 1.0, fly: 1.6, fb: 'BAT', drops: [['pena', 0.55]], gold: [1, 4], respawn: 35 },
-  dragao:    { name: 'Dragão Vermelho', hp: 900, dmg: 34, speed: 5.5, aggro: 22, xp: 600, h: 3.4, fly: 0.6, fb: 'BAT', drops: [['escama_vermelha', 1.0], ['escama_vermelha', 1.0], ['escama_dragao', 1.0]], gold: [300, 500], respawn: 1800, rare: [['olho_dragao', 1.0]], burns: true, boss: true },
+  dragao:    { name: 'Dragão Vermelho', hp: 900, dmg: 34, speed: 5.5, aggro: 22, xp: 600, h: 5.2, fly: 0.6, fb: 'BAT', drops: [['escama_vermelha', 1.0], ['escama_vermelha', 1.0], ['escama_dragao', 1.0]], gold: [300, 500], respawn: 1800, rare: [['olho_dragao', 1.0]], burns: true, boss: true },
   // Cripta Antiga (Guilda dos Aventureiros): KayKit skeletons, the Rei Esqueleto raises more of them at half life
   esqueleto:   { name: 'Esqueleto', hp: 55, dmg: 11, speed: 4.6, aggro: 15, xp: 26, h: 1.65, fb: 'SPIDER', drops: [['osso', 0.6]], gold: [3, 10], respawn: 120, rare: [['escudo_ferro', 0.03]] },
   esqueleto_guerreiro: { name: 'Esqueleto Guerreiro', hp: 90, dmg: 15, speed: 4.4, aggro: 16, xp: 42, h: 1.8, fb: 'SPIDER', drops: [['osso', 0.8]], gold: [6, 16], respawn: 150, rare: [['escudo_bronze', 0.03]] },
@@ -40,7 +40,9 @@ export class Monster {
   constructor(game, id, x, z) {
     const c = MONSTERS[id]; this.game = game; this.id = id; this.cfg = c; this.name = c.name; this.kind = 'monster'; this.hittable = true; this.blocking = false; this.radius = 0.6;
     this.pos = new THREE.Vector3(x, 0, z); this.home = this.pos.clone(); this.hp = c.hp; this.alive = true; this.state = 'idle'; this.cool = 0; this.t = Math.random() * 6; this.flash = 0; this.slow = 0; this.burn = 0; this.dieT = 0; this.respawnT = 0; this.lunge = null; this.wander = null; this.wanderWait = R(1, 4);
-    const sheet = 'sheet_' + (c.asset || '').replace(/^sprite_/, ''); const frames = Assets.has(sheet) ? Assets.anim(sheet, Math.round(c.h * 40)) : null;
+    // HD sheets named after the monster id (the user's art: 4 directions x 3 steps, plus an optional 1-column attack sheet)
+    const hd = Assets.has('sheet_' + id), sheet = hd ? 'sheet_' + id : 'sheet_' + (c.asset || '').replace(/^sprite_/, ''); const frames = Assets.has(sheet) ? (hd ? Assets.animAuto(sheet) : Assets.anim(sheet, Math.round(c.h * 40))) : null;
+    this.atkFrames = hd && Assets.has(sheet + '_attack') ? Assets.animAuto(sheet + '_attack', 1) : null; this.upp = hd && frames ? c.h / frames.down[0].height : 0;
     const src = frames ? frames.down[0] : Assets.has(c.asset) ? Assets.images[c.asset] : S[c.fb]; const ratio = src.width / src.height; this.h = c.h; this.mesh = makeBillboard(src, c.h * ratio, c.h, true); this.mesh.position.copy(this.pos); game.scene.add(this.mesh);   // own material: the hit flash tints only this one
     this.walker = new Walker(this.mesh, frames); this.shadow = makeShadow(c.h * ratio * (c.fly ? 0.5 : 0.8)); game.scene.add(this.shadow); this.prev = this.pos.clone();
     const mm = MONSTER_MODELS[id]; if (mm && Models.has(mm.model)) { this.actor = new Actor(mm.model, { height: c.h, forward: mm.forward || 0 }); applyLook(this.actor, mm); game.scene.add(this.actor.root); this.mesh.visible = false; this.shadow.visible = false; this.actor.play('idle'); }
@@ -104,7 +106,9 @@ export class Monster {
       if (this.state === 'lunge') { if (!this.lungeAnim) { this.lungeAnim = true; a.once('attack', { duration: 0.5 }); } } else { this.lungeAnim = false; if (!a.busy) a.play(this.state === 'chase' || this.state === 'flee' ? 'run' : moving ? 'walk' : 'idle', { speed: this.slow > 0 ? 0.5 : 1 }); }
       a.update(dt); return; }
     m.position.set(this.pos.x, hop + fly, this.pos.z); faceView(m); m.rotation.z = 0;
-    const wk = this.walker; if (moving) wk.face(mdx, mdz); else if (this.state === 'chase' || this.state === 'lunge') wk.face(p.pos.x - this.pos.x, p.pos.z - this.pos.z); wk.update(dt, moving || this.state === 'lunge', 6 + c.speed * 0.6);
+    const wk = this.walker; if (moving) wk.face(mdx, mdz); else if (this.state === 'chase' || this.state === 'lunge' || this.state === 'windup') wk.face(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
+    if (this.atkFrames && (this.state === 'windup' || this.state === 'lunge')) { const img = (this.atkFrames[wk.dir] || this.atkFrames.down)[0]; if (img !== wk.cur) { wk.cur = img; setBillboardImage(m, img); } } else wk.update(dt, moving || this.state === 'lunge', 6 + c.speed * 0.6);
+    if (this.upp && wk.cur) { m.scale.x = wk.cur.width * this.upp; m.scale.y = wk.cur.height * this.upp; }   // HD frames keep one pixel scale
     if (!wk.has) m.scale.x = Math.abs(m.scale.x) * ((moving ? mdx < 0 : p.pos.x < this.pos.x) ? -1 : 1);
     this.shadow.position.set(this.pos.x, 0.03, this.pos.z);
   }
