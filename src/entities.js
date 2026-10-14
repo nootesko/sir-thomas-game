@@ -33,7 +33,9 @@ export class NPC {
   moveTo(x, z) { this.pos.set(x, 0, z); this.mesh.position.copy(this.pos); this.col.x = x; this.col.z = z; this.anchor.set(x, 0, z); this.route = null; }
   say(kind, secs = 2.5) { this.bub.material = bubble(kind); this.bub.visible = true; this.bubbleT = secs; this.shownMark = undefined; }
   // walk to a world point along the tile grid, preferring sidewalks; door: the door to pass on arrival
-  goTo(x, z, done = null) { const tm = this.game.city.tiles; this.route = tm.findPath(this.pos.x, this.pos.z, x, z, 70, WALK_COST, 30000); this.dest = [x, z]; this.onArrive = done; this.wp = 0; if (!this.route) { this.route = [[x, z]]; } }
+  goTo(x, z, done = null) { const tm = this.game.city.tiles; this.route = tm.findPath(this.pos.x, this.pos.z, x, z, 70, WALK_COST, 30000);
+    // everyone follows the same tile path; each person keeps a lane of their own across it so groups do not walk in single file
+    if (this.route && this.route.length > 2) { const c = this.game.city; this.lane = this.lane ?? (Math.random() - 0.5) * 1.6; for (let i = 1; i < this.route.length - 1; i++) { const a = this.route[i - 1], b = this.route[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; const nx = this.route[i][0] - dz / l * this.lane, nz = this.route[i][1] + dx / l * this.lane; if (!c.blocked(nx, nz, 0.4)) this.route[i] = [nx, nz]; } } this.dest = [x, z]; this.onArrive = done; this.wp = 0; if (!this.route) { this.route = [[x, z]]; } }
   get busy() { return !!this.route; }
   // ---- daily schedule ----
   plan(hour) {

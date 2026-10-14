@@ -32,7 +32,7 @@ export class City {
     this.scene = scene; this.colliders = []; this.dynamic = []; this.buildings = []; this.roads = []; this.trees = []; this.lamps = []; this.scorch = [];
     this.doors = []; this.houses = []; this.containers = []; this.notes = []; this.floors = []; this.spots = {}; this.streets = []; this.fadeables = [];
     this.sets = {}; this.f3d = {}; this.torchLights = []; this.night = false; this.winter = false; this.darkness = 0;
-    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.buildWater();
+    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.unstickBanners(); this.buildWater();
     for (const d of this.doors) this.dynamic.push(d.col);   // doors block only while closed; never baked into the walk grid
     this.buildHash();
     // painter's order: every solid thing of the city sorts by its footprint on the ground (see billboard.js); the tile floor stays as is
@@ -57,7 +57,7 @@ export class City {
   addCircle(x, z, r) { this.colliders.push({ type: 'circle', x, z, r }); }
   addDynamic(c) { this.dynamic.push(c); return c; }
   // ground shadow width per set, as a fraction of the sprite width (0 = none: flat things, wall-mounted things, the cave mouth)
-  static SHADOW = { oak: 0.6, pine: 0.5, pineW: 0.5, big: 0.5, bigW: 0.5, lamp: 0.8, statue: 0.7, well: 0.9, bench: 0.9, crates: 0.9, barrel: 0.9, cart: 0.9, sign: 0.6, stallA: 0.9, stallB: 0.9, fountain: 0.9, rock: 0.9, bush: 0.9, dummy: 0.7, grave: 0.8, banner: 0.4, mushroom: 0.8, hedge: 0.9, fence: 0, flowers: 0, cavemouth: 0, scorch: 0, stalactite: 0 };
+  static SHADOW = { oak: 0.6, pine: 0.5, pineW: 0.5, big: 0.5, bigW: 0.5, lamp: 0.8, statue: 0.7, well: 0.9, bench: 0.9, crates: 0.9, barrel: 0.9, cart: 0.9, sign: 0.6, stallA: 0.9, stallB: 0.9, fountain: 0.9, rock: 0.9, bush: 0.9, dummy: 0.7, grave: 0.8, banner: 0, mushroom: 0.8, hedge: 0.9, fence: 0, flowers: 0, cavemouth: 0, scorch: 0, stalactite: 0 };
   // a 3D model set when assets3d has the model for this set, else a sprite billboard set
   // the user's painted objects replace the old sprites of a set; the drawn height is kept and the width follows the art
   userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
@@ -71,6 +71,8 @@ export class City {
   finalizeSets() { for (const s of Object.values(this.sets)) s.finalize(); for (const s of Object.values(this.f3d)) s.finalize(); }
   // instanced 3D furniture and fixtures (KayKit / Kenney), one set per model; null when the model is missing
   fset(model, max = 400, shadow = true) { if (!Models.has(model)) return null; return this.f3d[model] || (this.f3d[model] = new PropSet(this.scene, model, max, { shadow })); }
+  // banners were placed on walls for the 3D era; on the ground they must stand just outside any wall or building
+  unstickBanners() { const b = this.sets.banner; if (!b || !b.items) return; for (const it of b.items) { const [x, z] = this.nearestFree(it.x, it.z, 0.7); it.x = x; it.z = z; } b.fy = null; b.face(); }
   faceAll() { for (const s of Object.values(this.sets)) s.face(); }
   spot(kind, x, z) { (this.spots[kind] = this.spots[kind] || []).push([x, z]); }
 
