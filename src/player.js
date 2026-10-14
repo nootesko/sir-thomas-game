@@ -28,7 +28,7 @@ export class Player {
     this.h = 1.9; this.w = this.h * src.width / src.height; this.mesh = makeBillboard(src, this.w, this.h, true); this.mesh.material.depthTest = false; this.mesh.renderOrder = 20; game.scene.add(this.mesh);   // always visible, even behind roofs and trees
     this.walker = new Walker(this.mesh, frames); this.running = false;
     // optional extra sheets in the same 4-direction layout: attack (3 frames: wind-up, strike, follow-through) and block
-    this.atkFrames = frames && Assets.has('sheet_thomas_attack') ? Assets.animAuto('sheet_thomas_attack') : null; this.blockFrames = frames && Assets.has('sheet_thomas_block') ? Assets.animAuto('sheet_thomas_block') : null;
+    this.atkFrames = frames && Assets.has('sheet_thomas_attack') ? Assets.animAuto('sheet_thomas_attack', Math.max(1, Math.round(Assets.images.sheet_thomas_attack.width / (Assets.images.sheet_thomas.width / 3)))) : null; this.blockFrames = frames && Assets.has('sheet_thomas_block') ? Assets.animAuto('sheet_thomas_block') : null;
     this.upp = frames ? this.h / frames.down[0].height : 0;   // world units per sprite pixel: every sheet keeps the same scale, whatever its cell size
     // 3D body (Diablo look): the KayKit knight, animated; the sprite stays as fallback when the model is missing
     const cm = CHAR_MODELS.thomas; this.actor = cm && Models.has(cm.model) ? new Actor(cm.model, { height: cm.h }) : null;

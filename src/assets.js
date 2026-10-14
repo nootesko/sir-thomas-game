@@ -31,9 +31,9 @@ export const Assets = {
   // name may be a list: the first existing image wins (new three-quarter art, then the older front-view art, then the code drawing)
   src(name, fallback) { if (Array.isArray(name)) { for (const n of name) if (this.images[n]) return this.images[n]; return fallback; } return this.images[name] || fallback; },
   // walking frames of a character sheet, sliced once and shared: { down: [stand, left, right], left: [...], right: [...], up: [...] }
-  anim(name, targetH = 64, smooth = false) { const k = name + '@' + targetH + (smooth ? 's' : ''); if (!(k in this.frames)) this.frames[k] = this.images[name] ? sliceAnimSheet(this.images[name], targetH, 3, 4, smooth) : null; return this.frames[k]; },
+  anim(name, targetH = 64, smooth = false, cols = 3) { const k = name + '@' + targetH + (smooth ? 's' : '') + cols; if (!(k in this.frames)) this.frames[k] = this.images[name] ? sliceAnimSheet(this.images[name], targetH, cols, 4, smooth) : null; return this.frames[k]; },
   // HD painted sheets (big images) stay smooth at high resolution; old pixel-art sheets keep their pixel grid
-  animAuto(name) { const img = this.images[name]; return img && img.height > 1000 ? this.anim(name, 512, true) : this.anim(name, 64); },
+  animAuto(name, cols = 3) { const img = this.images[name]; return img && img.height > 1000 ? this.anim(name, 512, true, cols) : this.anim(name, 64, false, cols); },
   texture(name, fallback, { repeat = 1, repeatY = null, wrap = true, mips = true } = {}) {
     const src = this.images[name] || fallback; const t = new THREE.Texture(src); t.needsUpdate = true;
     t.magFilter = THREE.LinearFilter; t.minFilter = mips ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter; t.generateMipmaps = mips;   // smooth, painted look (Shop Titans) instead of hard pixels
