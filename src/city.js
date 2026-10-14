@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { TileMap, T, TILE } from './tilemap.js';
-import { Assets, TOP } from './assets.js';
+import { Assets, TOP, sliceSheet } from './assets.js';
 import * as PX from './pixel.js';
 import * as S from './sprites.js';
 import { BillboardSet, setBillboardImage, groundDepth } from './billboard.js';
@@ -59,7 +59,12 @@ export class City {
   // ground shadow width per set, as a fraction of the sprite width (0 = none: flat things, wall-mounted things, the cave mouth)
   static SHADOW = { oak: 0.6, pine: 0.5, pineW: 0.5, big: 0.5, bigW: 0.5, lamp: 0.8, statue: 0.7, well: 0.9, bench: 0.9, crates: 0.9, barrel: 0.9, cart: 0.9, sign: 0.6, stallA: 0.9, stallB: 0.9, fountain: 0.9, rock: 0.9, bush: 0.9, dummy: 0.7, grave: 0.8, banner: 0.4, mushroom: 0.8, hedge: 0.9, fence: 0, flowers: 0, cavemouth: 0, scorch: 0, stalactite: 0 };
   // a 3D model set when assets3d has the model for this set, else a sprite billboard set
-  set(name, src, max, w, h) { const pm = PROP_MODELS[name]; const s = pm && Models.has(pm.model) ? new ModelSet(this.scene, pm, max) : new BillboardSet(this.scene, src, max, City.SHADOW[name] ?? 0.7); s.w = w; s.h = h; this.sets[name] = s; return s; }
+  // the user's painted objects replace the old sprites of a set; the drawn height is kept and the width follows the art
+  userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
+      cut(Assets.images.arbustos_pedras, 4, 2, ['bush', 'bushBig', 'bushBerry', 'hedge', 'pebbles', 'rock', 'rockMoss', 'cliff']);
+      cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
+  set(name, src, max, w, h) { const art = this.userArt(name); if (art) { src = art; const s = new BillboardSet(this.scene, art, max, City.SHADOW[name] ?? 0.7), add = s.add.bind(s), k = art.width / art.height; s.add = (x, z, ww, hh, y) => add(x, z, hh * k, hh, y); s.w = h * k; s.h = h; this.sets[name] = s; return s; }
+    const pm = PROP_MODELS[name]; const s = pm && Models.has(pm.model) ? new ModelSet(this.scene, pm, max) : new BillboardSet(this.scene, src, max, City.SHADOW[name] ?? 0.7); s.w = w; s.h = h; this.sets[name] = s; return s; }
   finalizeSets() { for (const s of Object.values(this.sets)) s.finalize(); for (const s of Object.values(this.f3d)) s.finalize(); }
   // instanced 3D furniture and fixtures (KayKit / Kenney), one set per model; null when the model is missing
   fset(model, max = 400, shadow = true) { if (!Models.has(model)) return null; return this.f3d[model] || (this.f3d[model] = new PropSet(this.scene, model, max, { shadow })); }
@@ -343,6 +348,24 @@ export class City {
     const tuft = this.fset('forest/Grass_1_A', 2000, false), tuft2 = this.fset('forest/Grass_2_A', 1000, false), bush = this.fset('forest/Bush_1_A', 300);
     if (tuft) for (let i = 0; i < 2600; i++) { const x = R(-WORLD, WORLD), z = R(-WORLD, WORLD); if (blocked(x, z)) continue; (i % 3 ? tuft : tuft2 || tuft).add(x, z, R(0.6, 1.0), R(0, 6.28)); }
     if (bush) for (let i = 0; i < 260; i++) { const x = R(-WORLD, WORLD), z = R(-WORLD, WORLD); if (blocked(x, z)) continue; bush.add(x, z, R(0.7, 1.3), R(0, 6.28)); this.addCircle(x, z, 0.6); }
+    // the user's painted ground plants (assets/plantas_rasteiras.png, grid 4x3), one instanced sprite set per kind
+    const PL = Assets.images.plantas_rasteiras ? sliceSheet(Assets.images.plantas_rasteiras, 4, 3) : null;
+    if (PL && PL.length === 12) { PL.forEach(c => c.smooth = true); this.plantSets = [];
+      const kinds = [['tufoA', 0, 0.55, 14000], ['tufoB', 1, 0.55, 14000], ['tufoC', 2, 0.5, 6000], ['gramaAlta', 3, 0.95, 4000], ['florVermelha', 4, 0.55, 2400], ['florAmarela', 5, 0.55, 2400], ['florAzul', 6, 0.55, 2400], ['trevo', 7, 0.45, 4000], ['samambaia', 8, 0.85, 3000], ['lirios', 9, 0.9, 160], ['taboa', 10, 1.25, 300], ['cogumelos', 11, 0.6, 1200]];
+      const S2 = {}; for (const [name, i, h0, max] of kinds) { const img = PL[i], h = h0 * 1.6; const set = new BillboardSet(this.scene, img, max, 0); set.w = h * img.width / img.height; set.h = h; this.sets['plant_' + name] = set; S2[name] = { set, h, r: img.width / img.height }; }   // no ground shadow: small plants read better without it
+      const put = (k, x, z, s = 1) => { const p = S2[k]; p.set.add(x, z, p.h * p.r * s, p.h * s); };
+      const water = (x, z) => Math.abs(x + 150) < 13 || Math.hypot(x - this.pond.x, z - this.pond.z) < this.pond.r;
+      for (let i = 0; i < 110000; i++) { const x = R(-WORLD, WORLD), z = R(-WORLD, WORLD); if (blocked(x, z) || water(x, z)) continue; const forest = x > WALL + 175, k = rng(); const s = R(0.8, 1.25);
+        if (forest) put(k < 0.3 ? 'samambaia' : k < 0.5 ? 'gramaAlta' : k < 0.62 ? 'cogumelos' : k < 0.8 ? 'tufoB' : 'trevo', x, z, s);
+        else put(k < 0.3 ? 'tufoA' : k < 0.55 ? 'tufoB' : k < 0.68 ? 'tufoC' : k < 0.74 ? 'florVermelha' : k < 0.8 ? 'florAmarela' : k < 0.86 ? 'florAzul' : k < 0.94 ? 'trevo' : 'gramaAlta', x, z, s); }
+      // river banks and the pond: cattails on the edges, water lilies on the water
+      for (let z = -WORLD + 4; z < WORLD - 4; z += R(3, 7)) { if (rng() < 0.6) put('taboa', -164.5 + R(-1, 0.6), z, R(0.8, 1.2)); if (rng() < 0.6) put('taboa', -135.5 + R(-0.6, 1), z + 2, R(0.8, 1.2)); if (rng() < 0.25) put('lirios', -150 + R(-9, 9), z, R(0.8, 1.2)); }
+      for (let i = 0; i < 18; i++) { const a = rng() * 6.28, r = rng() * this.pond.r * 0.8; put('lirios', this.pond.x + Math.cos(a) * r, this.pond.z + Math.sin(a) * r, R(0.7, 1)); } }
+    // extra painted bushes and stones across the fields and the forest
+    if (this.userArt('bushBig')) { const B = this.set('bushBig', null, 700, 2.2, 1.7), BB = this.set('bushBerry', null, 420, 1.6, 1.2), PB = this.set('pebbles', null, 1000, 1.2, 0.6), RM = this.set('rockMoss', null, 300, 2.2, 1.5), CL = this.set('cliff', null, 120, 3, 3.4);
+      for (let i = 0; i < 7000; i++) { const x = R(-WORLD, WORLD), z = R(-WORLD, WORLD); if (blocked(x, z)) continue; const k = rng(), forest = x > WALL + 175, s = R(0.8, 1.25);
+        if (k < 0.1) { B.add(x, z, 0, 1.7 * s); this.addCircle(x, z, 0.8 * s); } else if (k < 0.16) { BB.add(x, z, 0, 1.2 * s); this.addCircle(x, z, 0.6 * s); } else if (k < 0.3) PB.add(x, z, 0, 0.6 * s);
+        else if (k < (forest ? 0.36 : 0.33)) { RM.add(x, z, 0, 1.5 * s); this.addCircle(x, z, 1.0 * s); } else if (k < (forest ? 0.38 : 0.34)) { CL.add(x, z, 0, 3.4 * s); this.addCircle(x, z, 1.3 * s); } } }
     this.forestGate = new THREE.Vector3(WALL + 185, 0, 0); add(WALL + 185, -9, true); add(WALL + 185, 9, true);
     // cave mouth at the end of the north road, flanked by rocks
     const cm = this.set('cavemouth', Assets.src(TOP('prop_cave_mouth'), PX.propCaveMouth()), 2, 7, 5); cm.add(C.mouth[0] + 4, C.mouth[1], 7, 5); this.addBox(C.mouth[0] + 4, C.mouth[1] - 1.2, 6, 1.6); rock.add(C.mouth[0] + 1, C.mouth[1] - 5, 2.6, 1.6); rock.add(C.mouth[0] + 7, C.mouth[1] + 4, 2.6, 1.6);
@@ -359,7 +382,8 @@ export class City {
     if (this.sets.oak && this.sets.oak.ps) this.sets.oak.setColor(on ? 0xdde8f4 : 0xffffff);
     else if (this.sets.oak) { const img = on ? PX.propOak(true) : Assets.src(TOP('sprite_tree_oak'), PX.propOak(false)); this.sets.oak.mesh.material = this.sets.oak.mesh.material.clone(); const t = new THREE.Texture(img); t.needsUpdate = true; t.magFilter = THREE.NearestFilter; t.colorSpace = THREE.SRGBColorSpace; this.sets.oak.mesh.material.map = t; }
     this.sets.rock.setColor(on ? 0xc9d6e2 : 0xffffff);
-    for (const k of ['forest/Grass_1_A', 'forest/Grass_2_A']) if (this.f3d[k]) this.f3d[k].visible = !on;   // tufts sleep under the snow
+    for (const k of ['forest/Grass_1_A', 'forest/Grass_2_A']) if (this.f3d[k]) this.f3d[k].visible = !on;
+    for (const k in this.sets) if (k.startsWith('plant_')) this.sets[k].visible = !on;   // ground plants sleep under the snow   // tufts sleep under the snow
     if (this.f3d['forest/Bush_1_A']) this.f3d['forest/Bush_1_A'].setColor(on ? 0xe4ecf6 : 0xffffff);
   }
   // darkness 0..1 drives plaza lamps and lit windows
@@ -405,6 +429,7 @@ export class City {
     for (const r of this.roads) tm.fillRect(r.x - r.w / 2, r.z - r.d / 2, r.x + r.w / 2, r.z + r.d / 2, T.dirt);
     tm.fillRect(-88, -88, 88, -84, T.cobble); tm.fillRect(-88, 84, 88, 88, T.cobble); tm.fillRect(-88, -88, -84, 88, T.cobble); tm.fillRect(84, -88, 88, 88, T.cobble);   // lanes along the wall
     tm.fillRect(-163, -WORLD, -137, WORLD, T.water);
+    tm.fillRect(WALL + 175, -WORLD, WORLD, WORLD, T.forest);   // the eastern forest floor: tall grass
     paintRegions(this, tm);
     tm.fillRect(-86, -86, -34, -34, T.plaza); tm.fillRect(-80, -62, -38, -36, T.plaza); tm.fillRect(-84, -60, -72, -40, T.grass); tm.fillRect(-46, -60, -36, -40, T.grass);   // castle courtyard with lawns
     tm.fillRect(-26, -86, 26, -34, T.plaza); tm.fillRect(-26, -86, -14, -74, T.grass); tm.fillRect(14, -86, 26, -74, T.grass);   // Praça da Luz
@@ -429,9 +454,14 @@ export class City {
     // garden soil; each image covers SPAN x SPAN tiles so stones keep a believable size
     const sheet = Assets.images.chao_cidade, cut = (i, c = 3, r = 2) => { if (!sheet) return null; const w = sheet.width / c, h = sheet.height / r, o = document.createElement('canvas'); o.width = o.height = 512; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(sheet, (i % c) * w + 2, Math.floor(i / c) * h + 2, w - 4, h - 4, 0, 0, 512, 512); return o; };
     const P = sheet ? { cobble: cut(0), plaza: cut(1), walk: cut(2), gravel: cut(3), dirt: cut(4), soil: cut(5) } : {};
-    this.tiles.span = sheet ? { [T.cobble]: 3, [T.plaza]: 6, [T.walk]: 2, [T.gravel]: 2, [T.dirt]: 3, [T.soil]: 3 } : {};
+    // nature sheet (assets/chao_natureza.png, grid 3x2): grass, tall forest grass, snow, ice, water, swamp mud
+    const nat = Assets.images.chao_natureza, cutN = i => { if (!nat) return null; const w = nat.width / 3, h = nat.height / 2, o = document.createElement('canvas'); o.width = o.height = 512; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(nat, (i % 3) * w + 2, Math.floor(i / 3) * h + 2, w - 4, h - 4, 0, 0, 512, 512); return o; };
+    const esp = Assets.images.chao_especial, cutE = i => { if (!esp) return null; const w = esp.width / 4, h = esp.height / 2, o = document.createElement('canvas'); o.width = o.height = 512; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(esp, (i % 4) * w + 2, Math.floor(i / 4) * h + 2, w - 4, h - 4, 0, 0, 512, 512); return o; };
+    if (esp) Object.assign(P, { planks: cutE(0), rock: cutE(1), ash: cutE(2), slime: cutE(3), crypt: cutE(4), sewer: cutE(5), sewage: cutE(6), boardwalk: cutE(7) });
+    if (nat) Object.assign(P, { grass: cutN(0), forest: cutN(1), snow: cutN(2), ice: cutN(3), water: cutN(4), mud: cutN(5) });
+    this.tiles.span = { ...(sheet ? { [T.cobble]: 3, [T.plaza]: 6, [T.walk]: 2, [T.gravel]: 2, [T.dirt]: 3, [T.soil]: 3 } : {}), ...(nat ? { [T.grass]: 2, [T.forest]: 3, [T.snow]: 3, [T.water]: 4, [T.mud]: 3 } : {}), ...(esp ? { [T.planks]: 2, [T.rock]: 3, [T.ash]: 3, [T.slime]: 3, [T.crypt]: 3, [T.sewer]: 2, [T.sewage]: 3 } : {}) };
     const grass = smooth('#86cb4c', [['#92d256', 6, 0.18], ['#7cc246', 5, 0.15]], 11), dirt = smooth('#cc9d60', [['#d6aa6c', 6, 0.2], ['#c09254', 5, 0.18]], 23), snow = smooth('#eef4fb', [['#ffffff', 6, 0.25], ['#e2ebf6', 5, 0.2]], 37);
-    this.tiles.paintAtlas({ [T.grass]: winter ? snow : grass, [T.cobble]: winter ? shade(P.cobble || img('cobble'), '#dde6ee', 0.35) : P.cobble || img('cobble'), [T.dirt]: winter ? shade(P.dirt || dirt, '#e6ecf2', 0.45) : P.dirt || dirt, [T.water]: winter ? img('ice') : img('water'), [T.plaza]: winter ? shade(P.plaza || img('cobble'), '#e8eef4', 0.5) : P.plaza || shade(img('cobble'), '#fff2d0', 0.22), [T.sewer]: img('sewer'), [T.crypt]: shade(img('cobble'), '#2a2236', 0.55), [T.sewage]: img('sewage'), [T.soil]: winter ? shade(P.soil || soil, '#e6ecf2', 0.5) : P.soil || soil, [T.planks]: img('planks'), [T.walk]: winter ? shade(P.walk || img('walk'), '#e8eef4', 0.5) : P.walk || img('walk'), [T.rock]: img('rock'), [T.gravel]: winter ? shade(P.gravel || img('gravel'), '#e6ecf2', 0.5) : P.gravel || img('gravel'), [T.snow]: snow, [T.mud]: smooth('#6a7440', [['#7c8648', 8, 0.5], ['#555e30', 7, 0.5]], 51), [T.ash]: shade(img('rock'), '#3a1408', 0.45), [T.slime]: shade(img('rock'), '#3a9a2a', 0.5) });
+    this.tiles.paintAtlas({ [T.grass]: winter ? P.snow || snow : P.grass || grass, [T.forest]: winter ? P.snow || snow : P.forest || P.grass || grass, [T.cobble]: winter ? shade(P.cobble || img('cobble'), '#dde6ee', 0.35) : P.cobble || img('cobble'), [T.dirt]: winter ? shade(P.dirt || dirt, '#e6ecf2', 0.45) : P.dirt || dirt, [T.water]: winter ? P.ice || img('ice') : P.water || img('water'), [T.plaza]: winter ? shade(P.plaza || img('cobble'), '#e8eef4', 0.5) : P.plaza || shade(img('cobble'), '#fff2d0', 0.22), [T.sewer]: P.sewer || img('sewer'), [T.crypt]: P.crypt || shade(img('cobble'), '#2a2236', 0.55), [T.sewage]: P.sewage || img('sewage'), [T.soil]: winter ? shade(P.soil || soil, '#e6ecf2', 0.5) : P.soil || soil, [T.planks]: P.planks || img('planks'), [T.walk]: winter ? shade(P.walk || img('walk'), '#e8eef4', 0.5) : P.walk || img('walk'), [T.rock]: P.rock || img('rock'), [T.gravel]: winter ? shade(P.gravel || img('gravel'), '#e6ecf2', 0.5) : P.gravel || img('gravel'), [T.snow]: P.snow || snow, [T.mud]: P.mud || smooth('#6a7440', [['#7c8648', 8, 0.5], ['#555e30', 7, 0.5]], 51), [T.ash]: P.ash || shade(img('rock'), '#3a1408', 0.45), [T.slime]: P.slime || shade(img('rock'), '#3a9a2a', 0.5) });
   }
   // nearest spot a character can stand on (spiral over the tile grid); used when a saved position ends up inside something
   nearestFree(x, z, r = 0.45) {

@@ -60,7 +60,8 @@ export class BillboardSet {
   constructor(scene, src, max, shadow = 0) { this.mesh = new THREE.InstancedMesh(geo, spriteMaterial(src), max); this.mesh.count = 0; this.mesh.frustumCulled = false; this.items = []; scene.add(this.mesh); this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.p = new THREE.Vector3(); this.s = new THREE.Vector3(); this.shadowK = shadow; this.shadows = shadow > 0 ? new ShadowSet(scene, max) : null; }
   add(x, z, w, h, y = 0) { this.items.push({ x, y, z, w, h }); if (this.shadows) this.shadows.add(x, z, w * this.shadowK, w * this.shadowK * 0.5); }
   finalize() { this.mesh.count = this.items.length; this.face(0); if (this.shadows) this.shadows.finalize(); }
-  face(yaw = VIEW.yaw, tilt = VIEW.tilt) { this.q.setFromEuler(new THREE.Euler(tilt, yaw, 0, 'YXZ')); for (let i = 0; i < this.items.length; i++) { const it = this.items[i]; this.p.set(it.x, it.y, it.z); this.s.set(it.w, it.h, 1); this.m.compose(this.p, this.q, this.s); this.mesh.setMatrixAt(i, this.m); } this.mesh.instanceMatrix.needsUpdate = true; }
+  face(yaw = VIEW.yaw, tilt = VIEW.tilt) { if (this.fy === yaw && this.ft === tilt && this.fn === this.items.length) return; this.fy = yaw; this.ft = tilt; this.fn = this.items.length;   // the camera never turns: rebuild only when something changed
+    this.q.setFromEuler(new THREE.Euler(tilt, yaw, 0, 'YXZ')); for (let i = 0; i < this.items.length; i++) { const it = this.items[i]; this.p.set(it.x, it.y, it.z); this.s.set(it.w, it.h, 1); this.m.compose(this.p, this.q, this.s); this.mesh.setMatrixAt(i, this.m); } this.mesh.instanceMatrix.needsUpdate = true; }
   set visible(v) { this.mesh.visible = v; if (this.shadows) this.shadows.mesh.visible = v; }
   get visible() { return this.mesh.visible; }
   setColor(hex) { if (!this.ownMat) { this.mesh.material = this.mesh.material.clone(); this.ownMat = true; } this.mesh.material.color.setHex(hex); }

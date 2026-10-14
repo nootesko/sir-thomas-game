@@ -2,10 +2,10 @@
 // transitions between terrains, plus a walkability grid used by click-to-walk pathfinding.
 import * as THREE from 'three';
 export const TILE = 2;
-export const T = { grass: 0, cobble: 1, dirt: 2, water: 3, plaza: 4, sewer: 5, sewage: 6, soil: 7, planks: 8, walk: 9, rock: 10, gravel: 11, snow: 12, mud: 13, ash: 14, slime: 15, crypt: 16 };
-const PRIORITY = { 0: 1, 1: 3, 2: 2, 3: 6, 4: 4, 5: 3, 6: 6, 7: 2, 8: 5, 9: 3, 10: 3, 11: 2 };   // higher spreads its border over lower
+export const T = { grass: 0, cobble: 1, dirt: 2, water: 3, plaza: 4, sewer: 5, sewage: 6, soil: 7, planks: 8, walk: 9, rock: 10, gravel: 11, snow: 12, mud: 13, ash: 14, slime: 15, crypt: 16, forest: 17 };
+const PRIORITY = { 0: 1, 1: 3, 2: 2, 3: 6, 4: 4, 5: 3, 6: 6, 7: 2, 8: 5, 9: 3, 10: 3, 11: 2, 12: 1, 13: 2, 14: 2, 15: 2, 16: 3, 17: 1.5 };   // higher spreads its border over lower
 // walking cost per terrain for pedestrians (they keep to sidewalks and paths; roads and lawns cost more)
-export const WALK_COST = { 0: 1.6, 1: 1.9, 2: 1.2, 4: 1.0, 5: 1.0, 7: 1.8, 8: 1.0, 9: 1.0, 10: 1.0, 11: 1.1, 16: 1.0 };
+export const WALK_COST = { 0: 1.6, 1: 1.9, 2: 1.2, 4: 1.0, 5: 1.0, 7: 1.8, 8: 1.0, 9: 1.0, 10: 1.0, 11: 1.1, 16: 1.0, 17: 1.8 };
 const CELLS = 5, CELL = 512;   // atlas: 5x5 cells of 512px (painted ground art keeps its detail)
 const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]];   // N E S W NE SE SW NW (z grows south)
 let seed = 99; const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
