@@ -15,7 +15,11 @@ const FEET_DEPTH = `#include <project_vertex>
   vec4 fc = projectionMatrix * feet;
   gl_Position.z = fc.z / fc.w * gl_Position.w;
 }`;
-function patch(m) { m.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace('#include <project_vertex>', FEET_DEPTH); }; m.customProgramCacheKey = () => 'feetdepth'; return m; }
+// instFade (instanced sets only): per-instance opacity, used to fade a tree or statue that hides the player behind it
+function patch(m) { m.onBeforeCompile = s => {
+    s.vertexShader = 'varying float vFade;\n#ifdef USE_INSTANCING\nattribute float instFade;\n#endif\n' + s.vertexShader.replace('#include <project_vertex>', FEET_DEPTH + '\n#ifdef USE_INSTANCING\nvFade = instFade;\n#else\nvFade = 1.0;\n#endif');
+    s.fragmentShader = 'varying float vFade;\n' + s.fragmentShader.replace('#include <alphatest_fragment>', 'diffuseColor.a *= vFade;\n#include <alphatest_fragment>'); };
+  m.customProgramCacheKey = () => 'feetdepth-fade'; return m; }
 // Buildings get the same treatment per vertex: a wall pixel is written with the depth of the ground right under it, so a character
 // standing south of a wall paints over it and one standing north is covered by it, instead of the wall's top leaning over everyone.
 const GROUND_DEPTH = `#include <project_vertex>
@@ -57,7 +61,9 @@ export class ShadowSet {
 
 export class BillboardSet {
   // shadow: shadow width as a fraction of the sprite width (0 = no shadow)
-  constructor(scene, src, max, shadow = 0) { this.mesh = new THREE.InstancedMesh(geo, spriteMaterial(src), max); this.mesh.count = 0; this.mesh.frustumCulled = false; this.items = []; scene.add(this.mesh); this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.p = new THREE.Vector3(); this.s = new THREE.Vector3(); this.shadowK = shadow; this.shadows = shadow > 0 ? new ShadowSet(scene, max) : null; }
+  constructor(scene, src, max, shadow = 0) { const g = geo.clone(); this.fade = new THREE.InstancedBufferAttribute(new Float32Array(max).fill(1), 1); g.setAttribute('instFade', this.fade); this.mesh = new THREE.InstancedMesh(g, spriteMaterial(src), max); this.mesh.count = 0; this.mesh.frustumCulled = false; this.items = []; scene.add(this.mesh); this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.p = new THREE.Vector3(); this.s = new THREE.Vector3(); this.shadowK = shadow; this.shadows = shadow > 0 ? new ShadowSet(scene, max) : null; }
+  // fade one instance (0..1); returns nothing, marks the buffer only when something changed
+  setFade(i, a) { if (this.fade.array[i] !== a) { this.fade.array[i] = a; this.fade.needsUpdate = true; } }
   add(x, z, w, h, y = 0) { this.items.push({ x, y, z, w, h }); if (this.shadows) this.shadows.add(x, z, w * this.shadowK, w * this.shadowK * 0.5); }
   finalize() { this.mesh.count = this.items.length; this.face(0); if (this.shadows) this.shadows.finalize(); }
   face(yaw = VIEW.yaw, tilt = VIEW.tilt) { if (this.fy === yaw && this.ft === tilt && this.fn === this.items.length) return; this.fy = yaw; this.ft = tilt; this.fn = this.items.length;   // the camera never turns: rebuild only when something changed

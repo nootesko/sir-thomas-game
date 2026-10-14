@@ -25,7 +25,7 @@ export class Player {
     const look = { hair: '#5a2d12', tunic: '#2b5fc7', legs: '#1e46a8', trim: '#f6c12e' };
     let frames = Assets.has('sheet_thomas') ? Assets.animAuto('sheet_thomas') : null; if (!frames && !Assets.has('sprite_thomas')) frames = S.humanFrames(look);
     const src = frames ? frames.down[0] : Assets.has('sprite_thomas') ? Assets.images.sprite_thomas : S.human(look);
-    this.h = 1.9; this.w = this.h * src.width / src.height; this.mesh = makeBillboard(src, this.w, this.h, true); this.mesh.material.depthTest = false; this.mesh.renderOrder = 20; game.scene.add(this.mesh);   // always visible, even behind roofs and trees
+    this.h = 1.9; this.w = this.h * src.width / src.height; this.mesh = makeBillboard(src, this.w, this.h, true); game.scene.add(this.mesh);   // depth by the feet like every sprite: trees and statues in front of Thomas cover him (and fade, see City.fadeSprites)
     this.walker = new Walker(this.mesh, frames); this.running = false;
     // optional extra sheets in the same 4-direction layout: attack (3 frames: wind-up, strike, follow-through) and block
     this.atkFrames = frames && Assets.has('sheet_thomas_attack') ? Assets.animAuto('sheet_thomas_attack', Math.max(1, Math.round(Assets.images.sheet_thomas_attack.width / (Assets.images.sheet_thomas.width / 3)))) : null; this.blockFrames = frames && Assets.has('sheet_thomas_block') ? Assets.animAuto('sheet_thomas_block') : null;
