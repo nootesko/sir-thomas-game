@@ -34,7 +34,7 @@ export class City {
     this.scene = scene; this.colliders = []; this.dynamic = []; this.buildings = []; this.roads = []; this.trees = []; this.lamps = []; this.scorch = [];
     this.doors = []; this.houses = []; this.containers = []; this.notes = []; this.floors = []; this.spots = {}; this.streets = []; this.fadeables = [];
     this.sets = {}; this.f3d = {}; this.torchLights = []; this.night = false; this.winter = false; this.darkness = 0;
-    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.unstickBanners(); this.buildWater();
+    this.buildTextures(); this.buildGround(); this.buildWalls(); this.buildTower(); this.buildCity(); this.buildOutside(); buildRegions(this); this.buildSewer(); this.buildCave(); buildCrypt(this); this.finalizeSets(); this.buildTiles(); this.unstickBanners(); this.buildBridge(); this.buildWater();
     for (const d of this.doors) this.dynamic.push(d.col);   // doors block only while closed; never baked into the walk grid
     this.buildHash();
     // painter's order: every solid thing of the city sorts by its footprint on the ground (see billboard.js); the tile floor stays as is
@@ -107,7 +107,8 @@ export class City {
       ['z', -30, -88, 88, 4], ['z', 30, -88, 88, 4], ['z', -58, -34, 88, 4], ['z', 58, -88, 88, 4],
     ];
     for (const [axis, c, a, b, h] of this.streetDefs) { const len = b - a, mid = (a + b) / 2; const rect = axis === 'x' ? { x: c, z: mid, w: h * 2, d: len } : { x: mid, z: c, w: len, d: h * 2 }; this.streets.push({ ...rect, kind: 'walk' }); this.streets.push(axis === 'x' ? { x: c, z: mid, w: (h - 2) * 2, d: len, kind: 'road' } : { x: mid, z: c, w: len, d: (h - 2) * 2, kind: 'road' }); }
-    this.colliders.push({ type: 'box', minX: -163, maxX: -137, minZ: -WORLD, maxZ: WORLD });   // river
+    this.colliders.push({ type: 'box', minX: -163, maxX: -137, minZ: -WORLD, maxZ: 116.5 }, { type: 'box', minX: -163, maxX: -137, minZ: 123.5, maxZ: WORLD });   // river, open where the bridge crosses (z 116-124)
+    this.colliders.push({ type: 'box', minX: -165, maxX: -135, minZ: 115.8, maxZ: 116.6 }, { type: 'box', minX: -165, maxX: -135, minZ: 123.4, maxZ: 124.2 });   // bridge rails
     this.colliders.push({ type: 'box', minX: -WORLD - 10, maxX: -WORLD, minZ: -WORLD, maxZ: WORLD }, { type: 'box', minX: WORLD, maxX: WORLD + 10, minZ: -WORLD, maxZ: WORLD }, { type: 'box', minX: -WORLD, maxX: WORLD, minZ: -WORLD - 10, maxZ: -WORLD }, { type: 'box', minX: -WORLD, maxX: WORLD, minZ: WORLD, maxZ: WORLD + 10 });
   }
   // ---------- walls ----------
@@ -445,6 +446,12 @@ export class City {
   }
   // ---------- terrain tiles ----------
   // water surfaces over the water tiles: a translucent shiny layer whose ripples scroll (river, pond, cave pool)
+  // the wooden bridge over the river (z 116-124): a plank deck above the water with side rails, walkable
+  buildBridge() {
+    const wood = this.mk(this.tex.planks, 8, 2), dark = new THREE.MeshLambertMaterial({ color: 0x5a3a1e });
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(30, 0.3, 7.6), wood); deck.position.set(-150, 0.15, 120); deck.receiveShadow = true; this.scene.add(deck);
+    for (const z of [116.4, 123.6]) { const rail = new THREE.Mesh(new THREE.BoxGeometry(30, 0.18, 0.18), dark); rail.position.set(-150, 1.0, z); this.scene.add(rail); for (let x = -164; x <= -136; x += 4) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.0, 0.25), dark); post.position.set(x, 0.6, z); this.scene.add(post); } }
+  }
   buildWater() {
     const t = this.tex.water.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 1);
     this.waterMat = new THREE.MeshPhongMaterial({ color: 0x5ab0f0, map: t, transparent: true, opacity: 0.62, shininess: 90, specular: 0xbfe6ff, depthWrite: false });
