@@ -120,6 +120,7 @@ class Game {
     add('esqueleto_guerreiro', [[K.x1 - 40, K.z0 + 30], [K.x0 + 100, K.z0 + 25], [K.x0 + 20, K.z1 - 25], [K.x0 + 55, K.z0 + 40]]); add('esqueleto_mago', [[K.x1 - 70, K.z1 - 20], [K.x0 + 30, K.z0 + 35]]); add('rei_esqueleto', [K.boss]);
     // the five Lost Pages (quest "As Páginas Perdidas"): swamp, jelly castle, gorge, Bird King's hill, crypt throne room
     [[-318, 160], [-282, -150], [262, 252], [-128, -336], [K.boss[0] + 8, K.boss[1] - 4]].forEach(([x, z], i) => { const pg = new Prop(this, { kind: 'page', x, z, w: 0.8, h: 0.8, src: Assets.src('art_page', S_PAGE), collide: false }); pg.page = i; this.entities.push(pg); });
+    if (Assets.has('art_throne')) this.entities.push(new Prop(this, { kind: 'prop', x: K.boss[0], z: K.boss[1] - 9, w: 4, h: 3.6, src: Assets.images.art_throne, collide: false }));
     this.entities.push(new Prop(this, { kind: 'cryptexit', x: K.entry[0] + 4, z: K.entry[1] + 4, w: 1.2, h: 2.4, src: Assets.src(TOP('prop_ladder'), S_LADDER), collide: false }));
     // the kingdom's regions (src/regions.js)
     const D = this.city.regions;
@@ -131,10 +132,11 @@ class Game {
     this.entities.push(new Prop(this, { kind: 'ladder', x: Sw.entry[0], z: Sw.entry[1], w: 1.2, h: 2.4, src: Assets.src(TOP('prop_ladder'), S_LADDER), collide: false }));
     this.entities.push(new Prop(this, { kind: 'caveexit', x: C.entry[0], z: C.entry[1], w: 1.2, h: 2.4, src: Assets.src(TOP('prop_ladder'), S_LADDER), collide: false }));
     this.entities.push(new Prop(this, { kind: 'pedras', x: Sw.x0 + 12, z: Sw.z1 - 14, w: 2.6, h: 1.6, src: Assets.src(TOP('prop_rock'), S.ROCKS.summer), collide: false }));
-    this.entities.push(new Prop(this, { kind: 'lore', x: C.x1 - 20, z: C.z0 + 27, w: 1.6, h: 2.4, src: S.LORE.statue, title: 'Altar da Gruta', text: '"Uma pedra lisa, gasta por mãos. Nela, gravado: QUEM TOMA A LUZ DEVE DEVOLVER O FRIO. Alguém esteve aqui muito antes da Fortaleza."' }));
+    this.entities.push(new Prop(this, { kind: 'lore', x: C.x1 - 20, z: C.z0 + 27, w: Assets.has('art_altar') ? 2.8 : 1.6, h: Assets.has('art_altar') ? 2.3 : 2.4, src: Assets.src('art_altar', S.LORE.statue), title: 'Altar da Gruta', text: '"Uma pedra lisa, gasta por mãos. Nela, gravado: QUEM TOMA A LUZ DEVE DEVOLVER O FRIO. Alguém esteve aqui muito antes da Fortaleza."' }));
   }
   // the guild's notice board on the Campo de Treino: two posts, a board, pinned papers (one merged mesh)
   buildGuildBoard() {
+    if (Assets.has('art_board')) { const [x, z] = GUILD_SPOT.board; this.entities.push(new Prop(this, { kind: 'prop', x, z, w: 3.2, h: 2.8, src: Assets.images.art_board, collide: false })); this.city.addBox(x, z, 2.8, 0.4); return; }
     const [x, z] = GUILD_SPOT.board, g = new THREE.Group(), wood = new THREE.MeshLambertMaterial({ color: 0x7a4a24 }), paper = new THREE.MeshLambertMaterial({ color: 0xf3e2b0 });
     for (const dx of [-1.1, 1.1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.4, 0.18), wood); p.position.set(dx, 1.2, 0); g.add(p); }
     const b = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.3, 0.12), wood); b.position.set(0, 1.6, 0); g.add(b); const roof = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.12, 0.5), wood); roof.position.set(0, 2.35, 0); g.add(roof);
@@ -174,7 +176,7 @@ class Game {
     [[X + 20, -12, 'capa'], [X + 45, 14, 'sopa'], [X + 80, -16, 'botas'], [X + 130, 18, 'glacial'], [X + 60, -45, 'elmo'], [X + 110, 40, 'amuleto']].forEach(([x, z, item]) => this.entities.push(new Prop(this, { kind: 'chest', x, z, w: 1.6, h: 1.2, src: chest, item })));
     const fire = [Assets.src(TOP('prop_campfire_off'), S.FIRE_OFF), ...(Assets.has('art_prop_campfire_lit') || Assets.has('prop_campfire_lit_top') || Assets.has('prop_campfire_lit') ? [Assets.src(TOP('prop_campfire_lit'))] : S.FIRE)];
     [[-8, 20, true], [X + 30, 7, false], [X + 85, -8, false], [X + 140, 8, false]].forEach(([x, z, lit]) => this.entities.push(new Prop(this, { kind: 'fire', x, z, w: 1.8, h: 2, src: fire, lit })));
-    [[X + 38, -9, 'sword', 'Espada Quebrada', '"Pertenceu a um cavaleiro que tentou atravessar o vale quando o inverno ainda dominava estas terras. Ele nunca chegou à floresta."'], [X + 100, 12, 'statue', 'Estátua Sem Rosto', '"Alguém esculpiu esta figura antes de a Fortaleza existir. Os braços estão erguidos, como se segurassem algo que brilhava."'], [X + 70, 30, 'toy', 'Brinquedo de Madeira', '"Um cavalinho de madeira, esquecido na neve. Alguma criança do vale brincava aqui quando ainda havia sol."']].forEach(([x, z, kind, title, text]) => this.entities.push(new Prop(this, { kind: 'lore', x, z, w: kind === 'statue' ? 1.6 : 1.1, h: kind === 'statue' ? 2.4 : 1.3, src: S.LORE[kind], title, text })));
+    [[X + 38, -9, 'sword', 'Espada Quebrada', '"Pertenceu a um cavaleiro que tentou atravessar o vale quando o inverno ainda dominava estas terras. Ele nunca chegou à floresta."'], [X + 100, 12, 'statue', 'Estátua Sem Rosto', '"Alguém esculpiu esta figura antes de a Fortaleza existir. Os braços estão erguidos, como se segurassem algo que brilhava."'], [X + 70, 30, 'toy', 'Brinquedo de Madeira', '"Um cavalinho de madeira, esquecido na neve. Alguma criança do vale brincava aqui quando ainda havia sol."']].forEach(([x, z, kind, title, text]) => this.entities.push(new Prop(this, { kind: 'lore', x, z, w: kind === 'statue' ? 1.6 : 1.1, h: kind === 'statue' ? 2.4 : 1.3, src: kind === 'sword' ? Assets.src('art_lore_sword', S.LORE.sword) : S.LORE[kind], title, text })));
     [[X + 25, -14], [X + 40, 16], [X + 58, -8], [X + 72, 14], [X + 90, -14], [X + 105, 10], [X + 120, -18], [X + 135, 12], [X + 150, -8], [X + 165, 10], [X + 60, -40], [X + 100, 36]].forEach(([x, z]) => this.entities.push(new Monster(this, 'lobo_gelo', x, z)));
     this.entities.push(new Prop(this, { kind: 'prop', x: this.city.forgePos.x, z: this.city.forgePos.z - 2, w: 1.2, h: 0.9, src: S.SHIELD_BROKEN, yOff: 1.1, collide: false }));
   }
@@ -286,6 +288,7 @@ class Game {
   }
 }
 Promise.all([Assets.preload(ASSET_NAMES), Models.preload(MODEL_NAMES)]).then(() => {
+  Assets.registerSheet('lugares', 4, 2, ['board', 'throne', 'owlstatue', 'altar', 'erva_prata', 'flor_sol', 'cogumelo_lunar', 'lore_sword']);
   Assets.registerSheet('objetos_jogo', 4, 2, ['prop_chest_closed', 'prop_chest_open', 'prop_campfire_lit', 'prop_campfire_off', 'prop_sewer_grate', 'prop_ladder', 'prop_scorch_mark', 'page']);
   if (Assets.has('ui_logo')) { for (const id of ['bigtitle']) { const el = document.getElementById(id); const img = document.createElement('img'); img.src = 'assets/ui_logo.png'; img.className = 'logo'; const t1 = el.querySelector('.mt1, .t1'), t2 = el.querySelector('.mt2, .t2'); if (t1) t1.replaceWith(img); if (t2) t2.remove(); } }
   if (Assets.has('ui_card_frame')) { const card = document.getElementById('card'); card.classList.add('framed'); }

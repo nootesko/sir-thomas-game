@@ -6,6 +6,8 @@ import * as THREE from 'three';
 import { ITEMS } from './items.js';
 import { MONSTERS } from './monsters.js';
 import { PERF } from './perf.js';
+import { Assets } from './assets.js';
+import { BillboardSet } from './billboard.js';
 
 export const CRYPT = { x0: -345, x1: -222, z0: -345, z1: -222, entry: [-236, -236], boss: [-300, -310] };
 export const GUILD_SPOT = { master: [52, -70], board: [47, -73] };
@@ -32,6 +34,7 @@ export function buildCrypt(city) {
   for (const [x, z] of [[C.x1 - 10, C.z1 - 8], [C.x1 - 45, C.z1 - 15], [cx, cz], [C.x0 + 20, cz + 30], [C.x0 + 60, C.z0 + 35], [C.boss[0], C.boss[1] + 12], [C.boss[0] + 18, C.boss[1]], [cx + 30, C.z0 + 20]]) {
     if (torch) torch.add(x, z, 1.4, 0); const l = new THREE.PointLight(0xff9a40, 16, 22, 1.5); l.position.set(x, 2.4, z); city.scene.add(l); city.cryptLights.push(l); }
   // the throne: a dais and a stone chair
+  if (Assets.has('art_throne')) { city.addBox(C.boss[0], C.boss[1] - 9, 3, 1.4); return; }   // the throne is the user's art (a sprite placed by main.js)
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(6, 6.5, 0.3, 16), mat); dais.position.set(C.boss[0], 0.15, C.boss[1] - 6); city.scene.add(dais);
   const throne = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 1.2), mat); throne.position.set(C.boss[0], 1.6, C.boss[1] - 9); throne.castShadow = PERF.shadows; city.scene.add(throne); city.addBox(C.boss[0], C.boss[1] - 9, 2.4, 1.2);
 }
@@ -60,9 +63,11 @@ export class Guild {
     const zones = { erva_prata: [[W + 15, -150, W + 170, 150, 22], [-80, 100, 60, 170, 8]], flor_sol: [[-150, -345, -40, -255, 10], [W + 20, 60, W + 150, 160, 10]], cogumelo_lunar: [[-345, 35, -175, 185, 9], [-55, -345, 195, -155, 9], [W + 185, -340, 345, -100, 6]] };
     for (const [kind, list] of Object.entries(zones)) for (const [x0, z0, x1, z1, n] of list) for (let i = 0, tries = 0; i < n && tries < n * 30; tries++) { const x = R(x0, x1), z = R(z0, z1); if (city.blocked(x, z, 0.8) || inCrypt(x, z)) continue; this.herbs.push({ kind, x, z, t: 0, rot: R(0, 6.28) }); i++; }
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    for (const kind of Object.keys(HERBS)) { const list = this.herbs.filter(h => h.kind === kind); const mesh = new THREE.InstancedMesh(herbGeometry(kind), kind === 'cogumelo_lunar' ? Object.assign(mat.clone(), { emissive: new THREE.Color(0x10204a) }) : mat, list.length); list.forEach((h, i) => { h.i = i; this.setHerb(mesh, h, true); }); mesh.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere(); mesh.castShadow = false; this.game.scene.add(mesh); this.meshes[kind] = mesh; }
+    for (const kind of Object.keys(HERBS)) { const list = this.herbs.filter(h => h.kind === kind), art = Assets.images['art_' + kind];
+      if (art) { const bb = new BillboardSet(this.game.scene, art, list.length, 0), H = 1.1, W = H * art.width / art.height; list.forEach((h, i) => { h.i = i; bb.add(h.x, h.z, W, H); }); bb.finalize(); bb.W = W; bb.H = H; this.meshes[kind] = { bb, instanceMatrix: {} }; continue; }   // the user's painted herb
+      const mesh = new THREE.InstancedMesh(herbGeometry(kind), kind === 'cogumelo_lunar' ? Object.assign(mat.clone(), { emissive: new THREE.Color(0x10204a) }) : mat, list.length); list.forEach((h, i) => { h.i = i; this.setHerb(mesh, h, true); }); mesh.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere(); mesh.castShadow = false; this.game.scene.add(mesh); this.meshes[kind] = mesh; }
   }
-  setHerb(mesh, h, on) { this.m.makeRotationY(h.rot).scale(new THREE.Vector3(on ? 1.4 : 0, on ? 1.4 : 0, on ? 1.4 : 0)).setPosition(h.x, 0, h.z); mesh.setMatrixAt(h.i, this.m); }
+  setHerb(mesh, h, on) { if (mesh.bb) { const it = mesh.bb.items[h.i]; it.w = on ? mesh.bb.W : 0; it.h = on ? mesh.bb.H : 0; mesh.bb.fy = null; mesh.bb.face(); return; } this.m.makeRotationY(h.rot).scale(new THREE.Vector3(on ? 1.4 : 0, on ? 1.4 : 0, on ? 1.4 : 0)).setPosition(h.x, 0, h.z); mesh.setMatrixAt(h.i, this.m); }
   pick(h) {
     const g = this.game, mesh = this.meshes[h.kind]; h.t = RESPAWN; this.setHerb(mesh, h, false); mesh.instanceMatrix.needsUpdate = true;
     const n = 1 + (Math.random() < 0.25 ? 1 : 0); g.addItem(h.kind, n); g.audio.pickup(); this.progress('coleta', h.kind, n); g.player.gainXp(2);

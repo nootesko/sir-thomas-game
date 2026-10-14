@@ -5,6 +5,8 @@
 import * as THREE from 'three';
 import { T } from './tilemap.js';
 import { PropSet, Models } from './models.js';
+import { Assets } from './assets.js';
+import { BillboardSet } from './billboard.js';
 
 // name shown on the HUD; rectangles are tested in order
 export const REGIONS = [
@@ -87,6 +89,7 @@ export function buildRegions(c) {
   const lib = c.house(16, -300, 24, 18, 4.2, 'e', 'library', { wall: 'stone', tint: 0xeae6f4, books: BOOKS }); lib.name = 'Grande Biblioteca de Neveo'; N.library = lib; N.houses.push(lib);
   const hall = c.house(118, -300, 20, 16, 4.6, 'w', 'throne', { wall: 'stone', tint: 0xe6ecf8 }); hall.name = 'Salão do Rei Ulmo'; N.hall = hall; N.houses.push(hall);
   // plaza: an owl statue on a plinth and lanterns
+  if (Assets.has('art_owlstatue')) { const art = Assets.images.art_owlstatue, bb = new BillboardSet(c.scene, art, 1, 0); bb.add(65, -258, 5.5 * art.width / art.height, 5.5); c.sets.owlStatue = bb; c.addCircle(65, -258, 2.2); } else
   { const st = c.mk(c.tex.stone, 1, 1); const base = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.1, 1.0, 8), st); base.position.set(65, 0.5, -258); c.scene.add(base); const body = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), st); body.scale.set(1, 1.35, 0.9); body.position.set(65, 2.5, -258); c.scene.add(body); const head = new THREE.Mesh(new THREE.SphereGeometry(0.85, 10, 8), st); head.position.set(65, 4.3, -258); c.scene.add(head);
     for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 4), st); ear.position.set(65 + sx * 0.5, 5.2, -258); ear.rotation.z = -sx * 0.3; c.scene.add(ear); } c.addCircle(65, -258, 2.2);
     const lamp = c.fset('graveyard/lightpost-single'); for (const [x, z] of [[40, -268], [90, -268], [52, -240], [78, -240], [30, -292], [104, -292]]) { if (lamp) { lamp.add(x, z, 3.2, 0); c.addCircle(x, z, 0.3); } const l = new THREE.PointLight(0xffb060, 0, 18, 1.5); l.position.set(x, 3.0, z); c.scene.add(l); (c.torchLights || (c.torchLights = [])).push(l); } }
