@@ -72,7 +72,7 @@ export class City {
       cut(Assets.images.cidade_a, 4, 2, ['fountain', 'well', 'lamp', 'bench', 'stallA', 'stallB', 'statue', 'banner']);
       cut(Assets.images.arvores, 4, 2, ['treeRound', 'oak', 'big', 'pineSmall', 'pine', 'bigW', 'treeSwamp', 'treeDark']); } return this._art[name] || null; }
   // nature on the ground (trees, stones, bushes, grass, flowers) casts no drop shadow (user's choice)
-  static NO_SHADOW = /^(oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
+  static NO_SHADOW = /^(stallA|stallB|lamp|oak|pine|pineW|big|bigW|treeRound|pineSmall|treeSwamp|treeDark|rock|bush|bushBig|bushBerry|hedge|pebbles|rockMoss|cliff|flowers|mushroom|stalactite|plant_)/;
   // 2D stand-in for a 3D kit model used by the regions (stumps, obelisks, Neveo pines, gorge rocks...): the user's art as a
   // billboard set with the PropSet signature add(x, z, height, rot, y)
   artSet(key, model, max = 600) { const map = { nat_statue_obelisk: 'obelisk', nat_statue_column: 'column', nat_stump: 'stump', nat_log: 'log', 'forest/Tree_3_A': 'treeSwamp', 'forest/Tree_1_B': 'treeDark', 'forest/Rock_1_C': 'rockMoss', 'forest/Rock_3_B': 'cliff', 'forest/Rock_1_E': 'cliff', 'forest/Rock_3_A': 'rock' };
