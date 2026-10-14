@@ -62,7 +62,7 @@ export class City {
   static SHADOW = { oak: 0.6, pine: 0.5, pineW: 0.5, big: 0.5, bigW: 0.5, lamp: 0.8, statue: 0.7, well: 0.9, bench: 0.9, crates: 0.9, barrel: 0.9, cart: 0.9, sign: 0.6, stallA: 0.9, stallB: 0.9, fountain: 0.9, rock: 0.9, bush: 0.9, dummy: 0.7, grave: 0.8, banner: 0, mushroom: 0.8, hedge: 0.9, fence: 0, flowers: 0, cavemouth: 0, scorch: 0, stalactite: 0 };
   // a 3D model set when assets3d has the model for this set, else a sprite billboard set
   // the user's painted objects replace the old sprites of a set; the drawn height is kept and the width follows the art
-  userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cells = sliceSheet(img, c, r); if (cells.length !== c * r) return; cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
+  userArt(name) { if (!this._art) { this._art = {}; const cut = (img, c, r, names) => { if (!img) return; const cw = img.width / c, ch = img.height / r; const cells = []; for (let i = 0; i < c * r; i++) { const o = document.createElement('canvas'); o.width = Math.floor(cw); o.height = Math.floor(ch); o.getContext('2d').drawImage(img, (i % c) * cw, Math.floor(i / c) * ch, cw, ch, 0, 0, o.width, o.height); cells.push(trimAlpha(o)); } cells.forEach((cv, i) => { if (names[i]) { cv.smooth = true; this._art[names[i]] = cv; } }); };
       cut(Assets.images.arbustos_pedras, 4, 2, ['bush', 'bushBig', 'bushBerry', 'hedge', 'pebbles', 'rock', 'rockMoss', 'cliff']);
       cut(Assets.images.inverno, 4, 2, ['W_treeRound', 'W_oak', 'W_pineSmall', 'W_pine', 'W_dead', 'W_bush', 'W_rock', 'W_grass']);
       // irregular sheet (the owl tree spans both rows): boxes in the 1774 x 887 layout, trimmed to the drawing
