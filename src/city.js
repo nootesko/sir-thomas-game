@@ -474,7 +474,7 @@ export class City {
     tm.fillRect(34, -84, 84, -62, T.dirt);   // Campo de Treino
     for (const p of this.plots) tm.fillRect(p.x - p.w / 2, p.z - p.d / 2, p.x + p.w / 2, p.z + p.d / 2, T.soil);   // Hortas
     for (const [cx, cz] of [[44, 44], [73, 44], [44, 73], [73, 73]]) { tm.fillRect(cx - 1, 34, cx + 1, 84, T.gravel); tm.fillRect(34, cz - 1, 84, cz + 1, T.gravel); } tm.fillCircle(this.pond.x, this.pond.z, this.pond.r, T.water);   // Jardins paths and pond
-    for (const f of this.floors) tm.fillRect(f.x0, f.z0, f.x1, f.z1, f.kind === 'keep' || f.kind === 'chapel' ? T.plaza : T.planks);
+    for (const f of this.floors) tm.fillInside(f.x0, f.z0, f.x1, f.z1, f.kind === 'keep' || f.kind === 'chapel' ? T.plaza : T.planks);
     tm.fillRect(Sw.x0, Sw.z0, Sw.x1, Sw.z1, T.sewer); tm.fillRect(Sw.x0 + 2, Sw.z1 - 12, Sw.x1 - 2, Sw.z1 - 4, T.sewage);
     tm.fillRect(CRYPT.x0, CRYPT.z0, CRYPT.x1, CRYPT.z1, T.crypt);
     tm.fillRect(C.x0, C.z0, C.x1, C.z1, T.rock); tm.fillCircle(this.cavePool.x, this.cavePool.z, this.cavePool.r, T.water);

@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 export const TILE = 2;
 export const T = { grass: 0, cobble: 1, dirt: 2, water: 3, plaza: 4, sewer: 5, sewage: 6, soil: 7, planks: 8, walk: 9, rock: 10, gravel: 11, snow: 12, mud: 13, ash: 14, slime: 15, crypt: 16, forest: 17 };
-const PRIORITY = { 0: 1, 1: 3, 2: 2, 3: 6, 4: 4, 5: 3, 6: 6, 7: 2, 8: 5, 9: 3, 10: 3, 11: 2, 12: 1, 13: 2, 14: 2, 15: 2, 16: 3, 17: 1.5 };   // higher spreads its border over lower
+const PRIORITY = { 0: 1, 1: 3, 2: 2, 3: 6, 4: 4, 5: 3, 6: 6, 7: 2, 8: 0.5, 9: 3, 10: 3, 11: 2, 12: 1, 13: 2, 14: 2, 15: 2, 16: 3, 17: 1.5 };   // higher spreads its border over lower
 // walking cost per terrain for pedestrians (they keep to sidewalks and paths; roads and lawns cost more)
 export const WALK_COST = { 0: 1.6, 1: 1.9, 2: 1.2, 4: 1.0, 5: 1.0, 7: 1.8, 8: 1.0, 9: 1.0, 10: 1.0, 11: 1.1, 16: 1.0, 17: 1.8 };
 const CELLS = 5, CELL = 512;   // atlas: 5x5 cells of 512px (painted ground art keeps its detail)
@@ -36,6 +36,8 @@ export class TileMap {
   snap(v) { return this.center(Math.max(0, Math.min(this.N - 1, this.toTile(v)))); }
   get(ix, iz) { return ix < 0 || iz < 0 || ix >= this.N || iz >= this.N ? -1 : this.terrain[iz * this.N + ix]; }
   at(x, z) { return this.get(this.toTile(x), this.toTile(z)); }
+  // only tiles whose centre lies inside the rectangle (house floors must not spill past the walls)
+  fillInside(x0, z0, x1, z1, t) { for (let iz = 0; iz < this.N; iz++) { const cz = this.center(iz); if (cz < z0 || cz > z1) continue; for (let ix = 0; ix < this.N; ix++) { const cx = this.center(ix); if (cx >= x0 && cx <= x1) this.terrain[iz * this.N + ix] = t; } } }
   fillRect(x0, z0, x1, z1, t) { for (let iz = Math.max(0, this.toTile(z0)); iz <= Math.min(this.N - 1, this.toTile(z1 - 0.01)); iz++) for (let ix = Math.max(0, this.toTile(x0)); ix <= Math.min(this.N - 1, this.toTile(x1 - 0.01)); ix++) this.terrain[iz * this.N + ix] = t; }
   fillCircle(cx, cz, r, t) { for (let iz = this.toTile(cz - r); iz <= this.toTile(cz + r); iz++) for (let ix = this.toTile(cx - r); ix <= this.toTile(cx + r); ix++) if (ix >= 0 && iz >= 0 && ix < this.N && iz < this.N && Math.hypot(this.center(ix) - cx, this.center(iz) - cz) < r) this.terrain[iz * this.N + ix] = t; }
   // walkability from the city's colliders (used only for path planning; live moves still ask the city)
